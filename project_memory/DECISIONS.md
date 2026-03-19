@@ -92,6 +92,18 @@ Todas las decisiones del sistema deben favorecer que Codex:
 - no abra frentes laterales
 - mantenga continuidad sin ruido
 
+### 11. Integración temprana con GitHub
+
+La vinculación del repo local con GitHub se resuelve desde la fase inicial del proyecto.
+
+El trabajo debe continuar con `main` sincronizada con `origin/main` como base normal de continuidad.
+
+### 12. Idioma del README principal
+
+El `README.md` principal puede mantenerse en español.
+
+Esta elección responde al contexto del máster y al objetivo de empleabilidad junior en España.
+
 ---
 
 ## Nota de uso
