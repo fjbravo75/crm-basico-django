@@ -15,22 +15,21 @@ No debe crecer por acumulación.
 ## Estado actual
 
 - **Proyecto:** CRM Básico
-- **Fase actual:** diseño y cierre del sistema documental local para Codex antes del arranque técnico del repo
-- **Estado técnico del repo:** estructura documental pendiente de implementación real en archivos locales
-- **Estado funcional del CRM:** todavía no iniciado dentro del repo
-- **Bloque actualmente abierto:** creación del sistema base de memoria viva local y gobierno documental para trabajo con Codex
+- **Fase actual:** arranque técnico del repo y cierre del sistema documental local para Codex
+- **Estado técnico del repo:** repo inicializado con Git, sistema de memoria viva local creado y proyecto Django base creado en raíz con `config/` y `manage.py`
+- **Estado funcional del CRM:** base Django recién creada, sin desarrollo funcional del producto todavía
+- **Bloque actualmente abierto:** cierre limpio del arranque inicial y preparación de la siguiente sesión de desarrollo
 
 ---
 
 ## Objetivo inmediato
 
-Dejar cerrado e implementable el sistema documental local mínimo para que Codex pueda trabajar con:
+Retomar el proyecto desde una base ya preparada para empezar el desarrollo real con orden y continuidad, partiendo de:
 
-- contexto presente claro
-- decisiones activas separadas del histórico
-- histórico modular de sesiones
-- histórico modular de decisiones superadas
-- reglas explícitas para decidir qué leer y qué actualizar
+- sistema documental local operativo
+- proyecto Django base ya creado
+- separación clara entre memoria viva, gobierno documental e histórico
+- repo listo para seguir con configuración y siguientes bloques técnicos
 
 ---
 
@@ -51,19 +50,12 @@ Dejar cerrado e implementable el sistema documental local mínimo para que Codex
 
 ## Límites actuales
 
-- No se ha arrancado todavía el desarrollo técnico del CRM dentro del repo.
-- No deben abrirse todavía bloques de implementación funcional del producto.
-- No deben añadirse complejidades fuera del sistema documental base.
+- El CRM todavía no tiene apps propias, modelos ni vistas funcionales.
+- No se ha empezado todavía el desarrollo del producto como tal.
+- La siguiente sesión debe seguir en pasos pequeños y sin abrir complejidad innecesaria.
 
 ---
 
 ## Siguiente paso exacto
 
-Implementar en el repo local la estructura base ya cerrada de estos archivos:
-
-- `AGENTS.md`
-- `project_memory/CURRENT_CONTEXT.md`
-- `project_memory/DECISIONS.md`
-- `project_memory/sessions/sessions_index.md`
-- `project_memory/decisions_archive/decisions_archive_index.md`
-- `project_memory/memory_system/` con sus reglas, plantillas y workflows base
+Definir y ejecutar el siguiente microbloque técnico del proyecto Django ya sobre la base creada, manteniendo sincronía limpia entre repo y memoria viva cuando haya un cambio real.

@@ -30,6 +30,4 @@ No debe contener resúmenes largos.
 
 ## Entradas
 
-Actualmente no hay sesiones históricas registradas en esta carpeta.
-
-La primera entrada deberá añadirse cuando exista un bloque cerrado con entidad real de continuidad.
+- `2026-03-19__initial-memory-system-and-django-bootstrap.md` — `session-2026-03-19-01` — arranque inicial del repo, creación del sistema de memoria viva local y bootstrap base de Django
