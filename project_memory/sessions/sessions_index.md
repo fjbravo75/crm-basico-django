@@ -30,4 +30,5 @@ No debe contener resúmenes largos.
 
 ## Entradas
 
+- `2026-03-19__github-link-repo-hygiene-readme-and-crm-app.md` — `session-2026-03-19-02` — vinculación con GitHub, saneamiento inicial del repo, README en español y creación de la app `crm`
 - `2026-03-19__initial-memory-system-and-django-bootstrap.md` — `session-2026-03-19-01` — arranque inicial del repo, creación del sistema de memoria viva local y bootstrap base de Django

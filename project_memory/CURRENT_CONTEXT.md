@@ -15,21 +15,21 @@ No debe crecer por acumulación.
 ## Estado actual
 
 - **Proyecto:** CRM Básico
-- **Fase actual:** arranque técnico del repo y cierre del sistema documental local para Codex
-- **Estado técnico del repo:** repo inicializado con Git, sistema de memoria viva local creado y proyecto Django base creado en raíz con `config/` y `manage.py`
-- **Estado funcional del CRM:** base Django recién creada, sin desarrollo funcional del producto todavía
-- **Bloque actualmente abierto:** cierre limpio del arranque inicial y preparación de la siguiente sesión de desarrollo
+- **Fase actual:** arranque inicial cerrado y base mínima del proyecto lista para el siguiente microbloque técnico
+- **Estado técnico del repo:** remoto GitHub creado y enlazado como `origin`, último cierre técnico validado con `main` sincronizada con `origin/main`, `.gitignore` reforzado, `README.md` inicial creado y proyecto Django base operativo en raíz con app `crm` ya creada y registrada
+- **Estado funcional del CRM:** existe la app principal `crm`, pero todavía no se han definido modelos reales ni comportamiento funcional del producto
+- **Bloque actualmente abierto:** preparar la planificación corta del modelo conceptual técnico del CRM antes de crear modelos y migraciones
 
 ---
 
 ## Objetivo inmediato
 
-Retomar el proyecto desde una base ya preparada para empezar el desarrollo real con orden y continuidad, partiendo de:
+Retomar el proyecto desde una base ya saneada y sincronizada para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
 
 - sistema documental local operativo
-- proyecto Django base ya creado
-- separación clara entre memoria viva, gobierno documental e histórico
-- repo listo para seguir con configuración y siguientes bloques técnicos
+- repo enlazado y sincronizado con GitHub desde `main`
+- saneamiento básico inicial del repo ya resuelto con `.gitignore` y `README.md`
+- app `crm` creada, registrada y validada con `python manage.py check`
 
 ---
 
@@ -50,12 +50,12 @@ Retomar el proyecto desde una base ya preparada para empezar el desarrollo real 
 
 ## Límites actuales
 
-- El CRM todavía no tiene apps propias, modelos ni vistas funcionales.
-- No se ha empezado todavía el desarrollo del producto como tal.
+- El CRM todavía no tiene modelos de dominio, flujos funcionales ni vistas de producto.
+- No se ha abierto todavía la implementación real del modelo del negocio.
 - La siguiente sesión debe seguir en pasos pequeños y sin abrir complejidad innecesaria.
 
 ---
 
 ## Siguiente paso exacto
 
-Definir y ejecutar el siguiente microbloque técnico del proyecto Django ya sobre la base creada, manteniendo sincronía limpia entre repo y memoria viva cuando haya un cambio real.
+Planificar en corto el modelo conceptual técnico del CRM y cerrar esa definición mínima antes de crear modelos reales y migraciones.
