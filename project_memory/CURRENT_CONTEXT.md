@@ -15,22 +15,22 @@ No debe crecer por acumulación.
 ## Estado actual
 
 - **Proyecto:** CRM Básico
-- **Fase actual:** base del dominio del CRM ya implementada y validada, lista para abrir el siguiente microbloque funcional
-- **Estado técnico del repo:** proyecto Django operativo en raíz, app `crm` registrada, `DEFAULT_AUTO_FIELD` fijado en `config/settings.py`, modelos `Company`, `Client` e `Interaction` implementados, admin básico registrado y migración inicial del dominio creada y aplicada
-- **Estado funcional del CRM:** ya existe el núcleo de datos del sistema sobre `User`, `Company`, `Client` e `Interaction`, pero siguen pendientes CRUDs, vistas, formularios, URLs y buscador
-- **Bloque actualmente abierto:** preparar el siguiente microbloque corto sobre la capa funcional del CRM a partir del modelo de datos ya cerrado
+- **Fase actual:** listado básico de clientes ya operativo, con búsqueda simple validada y datos demo cargables de forma repetible
+- **Estado técnico del repo:** proyecto Django operativo en raíz, app `crm` registrada, modelos `Company`, `Client` e `Interaction` implementados, listado de clientes activo en `/`, interfaz visible del flujo en español, y management command `seed_demo_crm` ya disponible para sembrar datos demo de desarrollo sin depender del admin
+- **Estado funcional del CRM:** existe un flujo básico de listado de clientes con búsqueda por nombre, correo o empresa; la base local queda preparada con 3 empresas demo, 12 clientes demo y 5 interacciones demo tras ejecutar el seed
+- **Bloque actualmente abierto:** listo para abrir el siguiente microbloque corto del alta básica de clientes sobre el listado ya operativo
 
 ---
 
 ## Objetivo inmediato
 
-Retomar el proyecto desde una base de dominio ya cerrada y validada para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
+Retomar el proyecto desde un listado de clientes ya funcional y una base demo repetible para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
 
 - sistema documental local operativo
 - repo enlazado y sincronizado con GitHub desde `main`
-- app `crm` con modelos reales de dominio y migración inicial aplicada
-- validaciones de `makemigrations`, `migrate` y `check` ya resueltas sin incidencias
-- commit de cierre del bloque registrado como `af47c0a` con mensaje `Implement CRM domain models and initial migration`
+- app `crm` con dominio base, listado de clientes y búsqueda simple ya resueltos
+- comando `python manage.py seed_demo_crm` implementado y validado de forma repetible
+- validaciones reales del bloque ejecutadas sobre `check`, seed, conteos y respuesta HTTP del listado y la búsqueda
 
 ---
 
@@ -46,17 +46,19 @@ Retomar el proyecto desde una base de dominio ya cerrada y validada para abrir e
 - `project_memory/memory_system/` será la capa de gobierno del sistema de memoria.
 - La salida “no tocar nada” es una decisión válida del sistema.
 - La prioridad general es contexto mínimo útil, no lectura exhaustiva.
+- Los datos demo del CRM se cargarán con un management command específico de desarrollo y no desde el admin como flujo principal.
 
 ---
 
 ## Límites actuales
 
-- El CRM ya tiene modelo de dominio base, pero todavía no tiene flujos funcionales ni vistas de producto.
-- No se han abierto todavía CRUDs, formularios, URLs ni comportamiento real de uso.
+- El CRM ya tiene listado de clientes y búsqueda simple, pero todavía no tiene alta, edición, borrado ni detalle de cliente.
+- No se ha abierto todavía un flujo CRUD completo ni formularios funcionales de producto.
+- La continuidad debe seguir en microbloques cortos y sin salir del eje principal de clientes.
 - La siguiente sesión debe seguir en pasos pequeños y sin abrir complejidad innecesaria.
 
 ---
 
 ## Siguiente paso exacto
 
-Abrir el siguiente microbloque corto para aterrizar el CRUD básico de clientes sobre la base de dominio ya implementada.
+Abrir el siguiente microbloque corto para implementar el alta básica de clientes sobre el listado ya operativo y la base demo disponible.

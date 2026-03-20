@@ -104,6 +104,12 @@ El `README.md` principal puede mantenerse en español.
 
 Esta elección responde al contexto del máster y al objetivo de empleabilidad junior en España.
 
+### 13. Carga de datos demo del CRM
+
+La carga de datos demo del CRM debe resolverse con un management command específico de desarrollo.
+
+Mientras este enfoque siga siendo suficiente y claro, no se usará el admin como vía principal para sembrar datos demo ni fixtures JSON como opción por defecto.
+
 ---
 
 ## Nota de uso
