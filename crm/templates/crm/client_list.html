@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clientes | CRM Básico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f6f8;
+            color: #1f2933;
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1rem 3rem;
+        }
+
+        h1 {
+            margin-bottom: 0.5rem;
+        }
+
+        .intro {
+            color: #52606d;
+            margin-bottom: 1.5rem;
+        }
+
+        form {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        input[type="search"] {
+            flex: 1 1 280px;
+            padding: 0.75rem;
+            border: 1px solid #cbd2d9;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+
+        button,
+        .link-button {
+            padding: 0.75rem 1rem;
+            border: 0;
+            border-radius: 0.5rem;
+            background: #0f6cbd;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .link-button {
+            display: inline-flex;
+            align-items: center;
+            background: #6b7280;
+        }
+
+        .results-meta {
+            margin-bottom: 1rem;
+            color: #52606d;
+        }
+
+        .client-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .client-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .client-name {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .status {
+            background: #e0f2fe;
+            color: #075985;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+        }
+
+        .client-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin: 0;
+        }
+
+        .client-details div {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        .client-details dt {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .client-details dd {
+            margin: 0;
+            color: #52606d;
+        }
+
+        .empty-state {
+            background: #fff;
+            border: 1px dashed #cbd2d9;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            color: #52606d;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Clientes</h1>
+        <p class="intro">Busca clientes por nombre, correo o empresa.</p>
+
+        <form method="get">
+            <input
+                type="search"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Escribe un nombre, correo o empresa"
+            >
+            <button type="submit">Buscar</button>
+            {% if search_query %}
+                <a class="link-button" href="{% url 'crm:client_list' %}">Limpiar</a>
+            {% endif %}
+        </form>
+
+        <p class="results-meta">
+            {% if search_query %}
+                {% if clients|length == 1 %}
+                    1 cliente encontrado para "{{ search_query }}"
+                {% else %}
+                    {{ clients|length }} clientes encontrados para "{{ search_query }}"
+                {% endif %}
+            {% else %}
+                {% if clients|length == 1 %}
+                    1 cliente disponible
+                {% else %}
+                    {{ clients|length }} clientes disponibles
+                {% endif %}
+            {% endif %}
+        </p>
+
+        {% if clients %}
+            <ul class="client-list">
+                {% for client in clients %}
+                    <li class="client-card">
+                        <div class="client-header">
+                            <h2 class="client-name">{{ client.first_name }} {{ client.last_name }}</h2>
+                            <span class="status">
+                                {% if client.status == "lead" %}
+                                    Prospecto
+                                {% elif client.status == "contacted" %}
+                                    Contactado
+                                {% elif client.status == "follow_up" %}
+                                    Seguimiento
+                                {% elif client.status == "proposal" %}
+                                    Propuesta
+                                {% elif client.status == "won" %}
+                                    Ganado
+                                {% elif client.status == "lost" %}
+                                    Perdido
+                                {% else %}
+                                    {{ client.get_status_display }}
+                                {% endif %}
+                            </span>
+                        </div>
+                        <dl class="client-details">
+                            <div>
+                                <dt>Correo</dt>
+                                <dd>{{ client.email|default:"Sin correo" }}</dd>
+                            </div>
+                            <div>
+                                <dt>Empresa</dt>
+                                <dd>{{ client.company.name|default:"Sin empresa" }}</dd>
+                            </div>
+                            <div>
+                                <dt>Responsable</dt>
+                                <dd>{{ client.owner.get_username }}</dd>
+                            </div>
+                        </dl>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state">
+                {% if search_query %}
+                    No se ha encontrado ningún cliente con esa búsqueda.
+                {% else %}
+                    No hay clientes todavía.
+                {% endif %}
+            </div>
+        {% endif %}
+    </main>
+</body>
+</html>
