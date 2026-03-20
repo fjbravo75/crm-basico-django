@@ -19,12 +19,21 @@
         }
 
         h1 {
-            margin-bottom: 0.5rem;
+            margin: 0 0 0.5rem;
         }
 
         .intro {
             color: #52606d;
+            margin: 0;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
 
         form {
@@ -43,7 +52,7 @@
         }
 
         button,
-        .link-button {
+        .button-link {
             padding: 0.75rem 1rem;
             border: 0;
             border-radius: 0.5rem;
@@ -54,9 +63,12 @@
             cursor: pointer;
         }
 
-        .link-button {
+        .button-link {
             display: inline-flex;
             align-items: center;
+        }
+
+        .button-secondary {
             background: #6b7280;
         }
 
@@ -137,8 +149,13 @@
 </head>
 <body>
     <main>
-        <h1>Clientes</h1>
-        <p class="intro">Busca clientes por nombre, correo o empresa.</p>
+        <div class="page-header">
+            <div>
+                <h1>Clientes</h1>
+                <p class="intro">Busca clientes por nombre, correo o empresa.</p>
+            </div>
+            <a class="button-link" href="{% url 'crm:client_create' %}">Nuevo cliente</a>
+        </div>
 
         <form method="get">
             <input
@@ -149,7 +166,7 @@
             >
             <button type="submit">Buscar</button>
             {% if search_query %}
-                <a class="link-button" href="{% url 'crm:client_list' %}">Limpiar</a>
+                <a class="button-link button-secondary" href="{% url 'crm:client_list' %}">Limpiar</a>
             {% endif %}
         </form>
 

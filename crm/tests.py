@@ -1,3 +1,47 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
-# Create your tests here.
+from .models import Client, Company
+
+
+class ClientCreateFlowTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="responsable",
+            password="testpass123",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+
+    def test_client_list_shows_link_to_create_view(self):
+        response = self.client.get(reverse("crm:client_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Nuevo cliente")
+        self.assertContains(response, reverse("crm:client_create"))
+
+    def test_create_client_redirects_to_list_and_shows_new_entry(self):
+        response = self.client.post(
+            reverse("crm:client_create"),
+            data={
+                "first_name": "Ana",
+                "last_name": "Torres",
+                "email": "ana.torres@example.com",
+                "phone": "+34 600 000 001",
+                "position": "Gerente Comercial",
+                "company": self.company.pk,
+                "status": Client.Status.LEAD,
+                "source": Client.Source.REFERRAL,
+                "notes": "Alta basica desde el formulario.",
+            },
+        )
+
+        self.assertRedirects(response, reverse("crm:client_list"))
+
+        client = Client.objects.get(email="ana.torres@example.com")
+        self.assertEqual(client.owner, self.owner)
+        self.assertEqual(client.company, self.company)
+
+        list_response = self.client.get(reverse("crm:client_list"))
+        self.assertContains(list_response, "Ana")
+        self.assertContains(list_response, "Torres")
