@@ -15,22 +15,22 @@ No debe crecer por acumulación.
 ## Estado actual
 
 - **Proyecto:** CRM Básico
-- **Fase actual:** listado básico de clientes ya operativo, con búsqueda simple validada y datos demo cargables de forma repetible
-- **Estado técnico del repo:** proyecto Django operativo en raíz, app `crm` registrada, modelos `Company`, `Client` e `Interaction` implementados, listado de clientes activo en `/`, interfaz visible del flujo en español, y management command `seed_demo_crm` ya disponible para sembrar datos demo de desarrollo sin depender del admin
-- **Estado funcional del CRM:** existe un flujo básico de listado de clientes con búsqueda por nombre, correo o empresa; la base local queda preparada con 3 empresas demo, 12 clientes demo y 5 interacciones demo tras ejecutar el seed
-- **Bloque actualmente abierto:** listo para abrir el siguiente microbloque corto del alta básica de clientes sobre el listado ya operativo
+- **Fase actual:** listado y alta básica de clientes ya operativos, con búsqueda simple validada y datos demo cargables de forma repetible
+- **Estado técnico del repo:** proyecto Django operativo en raíz, app `crm` registrada, modelos `Company`, `Client` e `Interaction` implementados, listado de clientes activo en `/`, formulario de alta disponible en `clientes/nuevo/`, interfaz visible del flujo en español, management command `seed_demo_crm` disponible, y validaciones reales recientes ejecutadas sobre `check` y tests del flujo de alta
+- **Estado funcional del CRM:** existe un flujo básico compuesto por listado de clientes con búsqueda por nombre, correo o empresa y alta básica de cliente con formulario server-rendered, guardado correcto, redirección al listado y visibilidad inmediata del nuevo cliente en el flujo normal
+- **Bloque actualmente abierto:** cerrado el microbloque corto del alta básica de clientes sobre el listado existente
 
 ---
 
 ## Objetivo inmediato
 
-Retomar el proyecto desde un listado de clientes ya funcional y una base demo repetible para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
+Retomar el proyecto desde un flujo base de clientes ya compuesto por listado y alta básica, con base demo repetible y validaciones recientes, para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
 
 - sistema documental local operativo
 - repo enlazado y sincronizado con GitHub desde `main`
-- app `crm` con dominio base, listado de clientes y búsqueda simple ya resueltos
+- app `crm` con dominio base, listado, búsqueda simple y alta básica ya resueltos
 - comando `python manage.py seed_demo_crm` implementado y validado de forma repetible
-- validaciones reales del bloque ejecutadas sobre `check`, seed, conteos y respuesta HTTP del listado y la búsqueda
+- validaciones reales recientes ejecutadas sobre `.venv/bin/python manage.py check` y `.venv/bin/python manage.py test crm.tests.ClientCreateFlowTests`
 
 ---
 
@@ -52,13 +52,13 @@ Retomar el proyecto desde un listado de clientes ya funcional y una base demo re
 
 ## Límites actuales
 
-- El CRM ya tiene listado de clientes y búsqueda simple, pero todavía no tiene alta, edición, borrado ni detalle de cliente.
-- No se ha abierto todavía un flujo CRUD completo ni formularios funcionales de producto.
+- El CRM ya tiene listado, búsqueda simple y alta básica de clientes, pero todavía no tiene detalle, edición ni borrado de cliente.
+- La resolución automática de `owner` en el alta es una solución puente para sostener el flujo actual, no un diseño final de negocio.
+- No se ha abierto todavía un flujo CRUD completo ni autenticación o permisos de producto.
 - La continuidad debe seguir en microbloques cortos y sin salir del eje principal de clientes.
-- La siguiente sesión debe seguir en pasos pequeños y sin abrir complejidad innecesaria.
 
 ---
 
 ## Siguiente paso exacto
 
-Abrir el siguiente microbloque corto para implementar el alta básica de clientes sobre el listado ya operativo y la base demo disponible.
+Abrir el microbloque corto del detalle básico de cliente.

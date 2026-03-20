@@ -30,6 +30,7 @@ No debe contener resúmenes largos.
 
 ## Entradas
 
+- `2026-03-20__basic-client-create-flow.md` — `session-2026-03-20-03` — alta básica de clientes operativa, formulario server-rendered, validación real del flujo y cierre documental local
 - `2026-03-20__crm-demo-seed-and-session-close.md` — `session-2026-03-20-02` — management command de seed demo del CRM, validación repetible y cierre documental local del bloque
 - `2026-03-20__crm-domain-models-and-initial-migration.md` — `session-2026-03-20-01` — implementación del modelo de dominio base del CRM, migración inicial y validación técnica del bloque
 - `2026-03-19__github-link-repo-hygiene-readme-and-crm-app.md` — `session-2026-03-19-02` — vinculación con GitHub, saneamiento inicial del repo, README en español y creación de la app `crm`
