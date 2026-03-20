@@ -36,6 +36,12 @@
             flex-wrap: wrap;
         }
 
+        .page-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
         .button-link {
             display: inline-flex;
             align-items: center;
@@ -96,7 +102,10 @@
                 <h1>{{ client.first_name }} {{ client.last_name }}</h1>
                 <p class="intro">Detalle básico del cliente dentro del flujo principal del CRM.</p>
             </div>
-            <a class="button-link" href="{% url 'crm:client_list' %}">Volver al listado</a>
+            <div class="page-actions">
+                <a class="button-link" href="{% url 'crm:client_update' client.pk %}">Editar cliente</a>
+                <a class="button-link" href="{% url 'crm:client_list' %}">Volver al listado</a>
+            </div>
         </div>
 
         <section class="detail-card">
