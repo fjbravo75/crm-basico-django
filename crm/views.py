@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, DetailView, ListView
 
 from .forms import ClientForm
 from .models import Client
@@ -77,3 +77,12 @@ class ClientCreateView(CreateView):
             owner.save(update_fields=["password"])
 
         return owner
+
+
+class ClientDetailView(DetailView):
+    model = Client
+    template_name = "crm/client_detail.html"
+    context_object_name = "client"
+
+    def get_queryset(self):
+        return Client.objects.select_related("company", "owner")
