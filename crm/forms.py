@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Client
+from .models import Client, Interaction
 
 
 STATUS_CHOICES_ES = [
@@ -19,6 +19,14 @@ SOURCE_CHOICES_ES = [
     (Client.Source.SOCIAL_MEDIA, "Redes sociales"),
     (Client.Source.EMAIL_CAMPAIGN, "Campaña de correo"),
     (Client.Source.OTHER, "Otro"),
+]
+
+INTERACTION_TYPE_CHOICES_ES = [
+    (Interaction.InteractionType.CALL, "Llamada"),
+    (Interaction.InteractionType.EMAIL, "Correo"),
+    (Interaction.InteractionType.MEETING, "Reunión"),
+    (Interaction.InteractionType.NOTE, "Nota"),
+    (Interaction.InteractionType.FOLLOW_UP, "Seguimiento"),
 ]
 
 
@@ -64,3 +72,30 @@ class ClientForm(forms.ModelForm):
         self.fields["company"].empty_label = "Sin empresa"
         self.fields["status"].choices = STATUS_CHOICES_ES
         self.fields["source"].choices = SOURCE_CHOICES_ES
+
+
+class InteractionForm(forms.ModelForm):
+    class Meta:
+        model = Interaction
+        fields = [
+            "interaction_type",
+            "subject",
+            "summary",
+            "next_step",
+        ]
+        labels = {
+            "interaction_type": "Tipo de actividad",
+            "subject": "Asunto",
+            "summary": "Resumen",
+            "next_step": "Próximo paso",
+        }
+        widgets = {
+            "interaction_type": forms.Select(attrs={"class": "form-control"}),
+            "subject": forms.TextInput(attrs={"class": "form-control"}),
+            "summary": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "next_step": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["interaction_type"].choices = INTERACTION_TYPE_CHOICES_ES

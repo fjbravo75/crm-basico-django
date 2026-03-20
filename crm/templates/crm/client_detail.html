@@ -65,6 +65,10 @@
             box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
         }
 
+        .detail-card + .detail-card {
+            margin-top: 1.5rem;
+        }
+
         .status {
             display: inline-flex;
             margin-bottom: 1rem;
@@ -96,6 +100,120 @@
         .detail-grid dd {
             margin: 0;
             color: #52606d;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .section-title {
+            margin: 0 0 0.35rem;
+            font-size: 1.2rem;
+        }
+
+        .section-intro {
+            margin: 0;
+            color: #52606d;
+        }
+
+        .interaction-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            gap: 0.9rem;
+        }
+
+        .interaction-item {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .interaction-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+            color: #52606d;
+        }
+
+        .interaction-meta strong {
+            color: #3e4c59;
+            font-size: 0.95rem;
+        }
+
+        .interaction-subject {
+            margin: 0 0 0.45rem;
+            color: #1f2933;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .interaction-summary {
+            margin: 0 0 0.7rem;
+            color: #52606d;
+            line-height: 1.55;
+        }
+
+        .interaction-summary p {
+            margin: 0 0 0.6rem;
+        }
+
+        .interaction-summary p:last-child {
+            margin-bottom: 0;
+        }
+
+        .interaction-next-step {
+            margin: 0 0 0.55rem;
+            color: #3e4c59;
+            line-height: 1.45;
+        }
+
+        .interaction-next-step strong {
+            color: #1f2933;
+        }
+
+        .interaction-author {
+            margin: 0;
+            color: #7b8794;
+            font-size: 0.95rem;
+        }
+
+        .empty-copy {
+            margin: 0;
+            color: #52606d;
+        }
+
+        .activity-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.9rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .activity-pagination-status {
+            color: #52606d;
+            font-size: 0.95rem;
+        }
+
+        .activity-pagination-link {
+            color: #1f2933;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .activity-pagination-link:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -190,6 +308,62 @@
                     <dd>{{ client.updated_at|date:"d/m/Y H:i" }}</dd>
                 </div>
             </dl>
+        </section>
+
+        <section class="detail-card">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Actividad</h2>
+                    <p class="section-intro">Seguimiento básico registrado para este cliente.</p>
+                </div>
+                <a class="button-link" href="{% url 'crm:interaction_create' client.pk %}">Registrar actividad</a>
+            </div>
+
+            {% if activity_page_obj.object_list %}
+                <ul class="interaction-list">
+                    {% for interaction in activity_page_obj %}
+                        <li class="interaction-item">
+                            <div class="interaction-meta">
+                                <strong>
+                                    {% if interaction.interaction_type == "call" %}
+                                        Llamada
+                                    {% elif interaction.interaction_type == "email" %}
+                                        Correo
+                                    {% elif interaction.interaction_type == "meeting" %}
+                                        Reunión
+                                    {% elif interaction.interaction_type == "note" %}
+                                        Nota
+                                    {% elif interaction.interaction_type == "follow_up" %}
+                                        Seguimiento
+                                    {% else %}
+                                        {{ interaction.get_interaction_type_display }}
+                                    {% endif %}
+                                </strong>
+                                <span>{{ interaction.interaction_date|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <p class="interaction-subject">{{ interaction.subject }}</p>
+                            <div class="interaction-summary">{{ interaction.summary|linebreaks }}</div>
+                            {% if interaction.next_step %}
+                                <p class="interaction-next-step"><strong>Próximo paso:</strong> {{ interaction.next_step }}</p>
+                            {% endif %}
+                            <p class="interaction-author">Registrada por {{ interaction.created_by.get_username }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% if activity_page_obj.paginator.num_pages > 1 %}
+                    <div class="activity-pagination">
+                        {% if activity_page_obj.has_previous %}
+                            <a class="activity-pagination-link" href="?{% if activity_query_string %}{{ activity_query_string }}&amp;{% endif %}activity_page={{ activity_page_obj.previous_page_number }}">Anterior</a>
+                        {% endif %}
+                        <span class="activity-pagination-status">Página {{ activity_page_obj.number }} de {{ activity_page_obj.paginator.num_pages }}</span>
+                        {% if activity_page_obj.has_next %}
+                            <a class="activity-pagination-link" href="?{% if activity_query_string %}{{ activity_query_string }}&amp;{% endif %}activity_page={{ activity_page_obj.next_page_number }}">Siguiente</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <p class="empty-copy">Todavía no hay actividad registrada.</p>
+            {% endif %}
         </section>
     </main>
 </body>

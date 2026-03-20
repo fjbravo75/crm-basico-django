@@ -30,6 +30,7 @@ No debe contener resúmenes largos.
 
 ## Entradas
 
+- `2026-03-20__client-activity-flow-polish-and-demo-seed.md` — `session-2026-03-20-07` — primer flujo visible de actividad asociado al cliente, pulido local del detalle, paginación del bloque y ampliación del seed demo para pruebas reales
 - `2026-03-20__basic-client-delete-and-list-polish.md` — `session-2026-03-20-06` — cierre del CRUD visible básico de clientes, confirmación de borrado, compactación del listado y paginación básica
 - `2026-03-20__basic-client-update-flow.md` — `session-2026-03-20-05` — edición básica de cliente operativa, formulario reutilizado, validación técnica del bloque y cierre documental local
 - `2026-03-20__basic-client-detail-flow.md` — `session-2026-03-20-04` — detalle básico de cliente operativo, enlace desde el listado, validación técnica del bloque y cierre documental local

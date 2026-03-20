@@ -181,14 +181,123 @@ CLIENTS = [
 ]
 
 INTERACTIONS = [
+    # Cliente principal para probar paginacion del bloque de actividad.
+    {
+        "client_email": "diego.martin@auroratech.example",
+        "interaction_type": Interaction.InteractionType.EMAIL,
+        "interaction_date": "2026-03-19T11:15:00",
+        "subject": "Correo con informacion comercial resumida",
+        "summary": (
+            "Se envio un resumen claro de la propuesta comercial y del alcance inicial planteado para el equipo.\n\n"
+            "Diego confirmo que el enfoque encaja mejor si se prioriza visibilidad del pipeline y seguimiento de proximos pasos."
+        ),
+        "next_step": "Preparar una demo corta con el flujo comercial principal.",
+    },
     {
         "client_email": "diego.martin@auroratech.example",
         "interaction_type": Interaction.InteractionType.CALL,
-        "interaction_date": "2026-03-03T10:00:00",
-        "subject": "Primera llamada de diagnostico",
-        "summary": "Se revisaron necesidades basicas del equipo y puntos de dolor del proceso comercial.",
-        "next_step": "Preparar una demo corta centrada en pipeline y responsables.",
+        "interaction_date": "2026-03-18T16:30:00",
+        "subject": "Llamada para revisar alcance inicial",
+        "summary": "Se aclararon dudas sobre usuarios, responsables y nivel de detalle esperado en el seguimiento diario.",
+        "next_step": "Enviar ejemplo simple de tablero comercial para la siguiente revision.",
     },
+    {
+        "client_email": "diego.martin@auroratech.example",
+        "interaction_type": Interaction.InteractionType.MEETING,
+        "interaction_date": "2026-03-17T09:00:00",
+        "subject": "Reunion breve de exploracion",
+        "summary": (
+            "El equipo compartio como registra hoy contactos, propuestas y seguimientos pendientes.\n\n"
+            "Se vio una necesidad clara de centralizar notas y evitar que proximos pasos queden repartidos entre correo y hojas sueltas."
+        ),
+        "next_step": "Recoger dos casos reales para incluirlos en la demo guiada.",
+    },
+    {
+        "client_email": "diego.martin@auroratech.example",
+        "interaction_type": Interaction.InteractionType.NOTE,
+        "interaction_date": "2026-03-16T13:45:00",
+        "subject": "Nota interna sobre objeciones del cliente",
+        "summary": "La principal objecion sigue siendo el tiempo de adopcion del equipo y la carga inicial de datos.",
+        "next_step": "",
+    },
+    {
+        "client_email": "diego.martin@auroratech.example",
+        "interaction_type": Interaction.InteractionType.FOLLOW_UP,
+        "interaction_date": "2026-03-14T10:20:00",
+        "subject": "Seguimiento tras varios dias sin respuesta",
+        "summary": (
+            "Se contacto de nuevo para confirmar si el material enviado habia llegado al equipo responsable.\n\n"
+            "Diego indico que necesitaba cerrar primero una revision interna antes de mover la conversacion a una demo mas formal."
+        ),
+        "next_step": "Retomar contacto a principios de la semana siguiente.",
+    },
+    {
+        "client_email": "diego.martin@auroratech.example",
+        "interaction_type": Interaction.InteractionType.EMAIL,
+        "interaction_date": "2026-03-12T17:10:00",
+        "subject": "Envio pendiente de propuesta ajustada",
+        "summary": "Se compartio una version mas breve de la propuesta para facilitar una revision interna rapida.",
+        "next_step": "Confirmar recepcion y resolver comentarios de alcance.",
+    },
+    {
+        "client_email": "diego.martin@auroratech.example",
+        "interaction_type": Interaction.InteractionType.CALL,
+        "interaction_date": "2026-03-09T12:05:00",
+        "subject": "Llamada inicial de presentacion",
+        "summary": (
+            "Se presento el CRM con foco en simplicidad, seguimiento y visibilidad comercial.\n\n"
+            "El cliente comento que ahora mismo trabaja con correos, notas sueltas y una hoja compartida poco mantenible."
+        ),
+        "next_step": "",
+    },
+    {
+        "client_email": "diego.martin@auroratech.example",
+        "interaction_type": Interaction.InteractionType.NOTE,
+        "interaction_date": "2026-03-03T10:00:00",
+        "subject": "Registro inicial de necesidades detectadas",
+        "summary": (
+            "Se dejaron anotadas las prioridades del equipo para no perder contexto antes de la primera demo.\n\n"
+            "Las necesidades principales son orden, trazabilidad del contacto y seguimiento claro de responsables."
+        ),
+        "next_step": "Preparar guion comercial para la primera llamada de diagnostico.",
+    },
+    # Segundo cliente demo con volumen suficiente para una paginacion corta.
+    {
+        "client_email": "lucia.romero@nexoindustrial.example",
+        "interaction_type": Interaction.InteractionType.MEETING,
+        "interaction_date": "2026-03-18T15:00:00",
+        "subject": "Reunion de exploracion del proceso actual",
+        "summary": (
+            "Lucia describio un proceso comercial largo, con varios interlocutores y seguimiento irregular entre reuniones.\n\n"
+            "Se acordo que la demo debe centrarse en como registrar actividad y proximos pasos sin complejidad adicional."
+        ),
+        "next_step": "Preparar ejemplo orientado a seguimiento industrial B2B.",
+    },
+    {
+        "client_email": "lucia.romero@nexoindustrial.example",
+        "interaction_type": Interaction.InteractionType.EMAIL,
+        "interaction_date": "2026-03-15T10:40:00",
+        "subject": "Correo con casos de uso industriales",
+        "summary": "Se compartieron ejemplos breves de seguimiento comercial aplicados a oportunidades con ciclo largo.",
+        "next_step": "Verificar que los casos elegidos encajan con su operativa real.",
+    },
+    {
+        "client_email": "lucia.romero@nexoindustrial.example",
+        "interaction_type": Interaction.InteractionType.FOLLOW_UP,
+        "interaction_date": "2026-03-11T18:20:00",
+        "subject": "Seguimiento tras revisar la propuesta",
+        "summary": "La cliente confirmo interes, pero pidio unos dias para revisar internamente prioridades del trimestre.",
+        "next_step": "",
+    },
+    {
+        "client_email": "lucia.romero@nexoindustrial.example",
+        "interaction_type": Interaction.InteractionType.NOTE,
+        "interaction_date": "2026-03-06T09:15:00",
+        "subject": "Nota interna sobre prioridades del trimestre",
+        "summary": "Se registro que el equipo valora rapidez de adopcion y una vista simple del historial de contacto.",
+        "next_step": "Ajustar el discurso de demo a implantacion rapida y seguimiento claro.",
+    },
+    # Actividad ligera adicional para otros clientes demo ya presentes.
     {
         "client_email": "marta.gil@auroratech.example",
         "interaction_type": Interaction.InteractionType.FOLLOW_UP,
@@ -204,14 +313,6 @@ INTERACTIONS = [
         "subject": "Envio de propuesta inicial",
         "summary": "Se compartio un resumen del flujo de trabajo y casos de uso para expansion comercial.",
         "next_step": "Confirmar si el equipo quiere una demo con dos responsables de tienda.",
-    },
-    {
-        "client_email": "lucia.romero@nexoindustrial.example",
-        "interaction_type": Interaction.InteractionType.MEETING,
-        "interaction_date": "2026-03-10T12:00:00",
-        "subject": "Reunion de descubrimiento",
-        "summary": "Se identificaron oportunidades para ordenar seguimiento y proximos pasos del equipo.",
-        "next_step": "Preparar ejemplo de seguimiento para clientes industriales.",
     },
     {
         "client_email": "ines.campos@nexoindustrial.example",
@@ -313,13 +414,14 @@ class Command(BaseCommand):
 
     def _seed_interactions(self, owner, clients):
         counts = {"created": 0, "reused": 0}
+        seeded_ids_by_client = {}
 
         for item in INTERACTIONS:
             interaction_date = timezone.make_aware(
                 datetime.fromisoformat(item["interaction_date"]),
                 timezone.get_current_timezone(),
             )
-            _, created = Interaction.objects.update_or_create(
+            interaction, created = Interaction.objects.update_or_create(
                 client=clients[item["client_email"]],
                 interaction_type=item["interaction_type"],
                 interaction_date=interaction_date,
@@ -330,6 +432,10 @@ class Command(BaseCommand):
                     "next_step": item["next_step"],
                 },
             )
+            seeded_ids_by_client.setdefault(item["client_email"], set()).add(interaction.pk)
             counts["created" if created else "reused"] += 1
+
+        for client_email, interaction_ids in seeded_ids_by_client.items():
+            Interaction.objects.filter(client=clients[client_email]).exclude(pk__in=interaction_ids).delete()
 
         return counts
