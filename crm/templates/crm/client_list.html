@@ -115,6 +115,10 @@
             font-size: 0.9rem;
         }
 
+        .card-actions {
+            margin-top: 1rem;
+        }
+
         .client-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -191,7 +195,9 @@
                 {% for client in clients %}
                     <li class="client-card">
                         <div class="client-header">
-                            <h2 class="client-name">{{ client.first_name }} {{ client.last_name }}</h2>
+                            <h2 class="client-name">
+                                <a href="{% url 'crm:client_detail' client.pk %}">{{ client.first_name }} {{ client.last_name }}</a>
+                            </h2>
                             <span class="status">
                                 {% if client.status == "lead" %}
                                     Prospecto
@@ -224,6 +230,9 @@
                                 <dd>{{ client.owner.get_username }}</dd>
                             </div>
                         </dl>
+                        <div class="card-actions">
+                            <a class="button-link button-secondary" href="{% url 'crm:client_detail' client.pk %}">Ver detalle</a>
+                        </div>
                     </li>
                 {% endfor %}
             </ul>

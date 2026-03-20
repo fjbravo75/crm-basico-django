@@ -45,3 +45,42 @@ class ClientCreateFlowTests(TestCase):
         list_response = self.client.get(reverse("crm:client_list"))
         self.assertContains(list_response, "Ana")
         self.assertContains(list_response, "Torres")
+
+
+class ClientDetailFlowTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="responsable",
+            password="testpass123",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.client_record = Client.objects.create(
+            first_name="Lucia",
+            last_name="Martinez",
+            email="lucia.martinez@example.com",
+            phone="+34 600 000 002",
+            position="Directora Comercial",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.CONTACTED,
+        )
+
+    def test_client_list_shows_link_to_detail_view(self):
+        response = self.client.get(reverse("crm:client_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("crm:client_detail", args=[self.client_record.pk]))
+        self.assertContains(response, "Ver detalle")
+
+    def test_client_detail_view_shows_main_client_information(self):
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Lucia")
+        self.assertContains(response, "Martinez")
+        self.assertContains(response, "lucia.martinez@example.com")
+        self.assertContains(response, "+34 600 000 002")
+        self.assertContains(response, "Empresa Demo")
+        self.assertContains(response, "Directora Comercial")
+        self.assertContains(response, "Contactado")
+        self.assertContains(response, self.owner.get_username())

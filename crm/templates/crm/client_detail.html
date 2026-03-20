@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ client.first_name }} {{ client.last_name }} | CRM Básico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f6f8;
+            color: #1f2933;
+        }
+
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1rem 3rem;
+        }
+
+        h1 {
+            margin: 0 0 0.5rem;
+        }
+
+        .intro {
+            color: #52606d;
+            margin: 0;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .button-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            background: #6b7280;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .detail-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        }
+
+        .status {
+            display: inline-flex;
+            margin-bottom: 1rem;
+            background: #e0f2fe;
+            color: #075985;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.75rem;
+            margin: 0;
+        }
+
+        .detail-grid div {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        .detail-grid dt {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-grid dd {
+            margin: 0;
+            color: #52606d;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="page-header">
+            <div>
+                <h1>{{ client.first_name }} {{ client.last_name }}</h1>
+                <p class="intro">Detalle básico del cliente dentro del flujo principal del CRM.</p>
+            </div>
+            <a class="button-link" href="{% url 'crm:client_list' %}">Volver al listado</a>
+        </div>
+
+        <section class="detail-card">
+            <span class="status">
+                {% if client.status == "lead" %}
+                    Prospecto
+                {% elif client.status == "contacted" %}
+                    Contactado
+                {% elif client.status == "follow_up" %}
+                    Seguimiento
+                {% elif client.status == "proposal" %}
+                    Propuesta
+                {% elif client.status == "won" %}
+                    Ganado
+                {% elif client.status == "lost" %}
+                    Perdido
+                {% else %}
+                    {{ client.get_status_display }}
+                {% endif %}
+            </span>
+
+            <dl class="detail-grid">
+                <div>
+                    <dt>Nombre</dt>
+                    <dd>{{ client.first_name|default:"" }}</dd>
+                </div>
+                <div>
+                    <dt>Apellidos</dt>
+                    <dd>{{ client.last_name|default:"" }}</dd>
+                </div>
+                <div>
+                    <dt>Correo</dt>
+                    <dd>{{ client.email|default:"" }}</dd>
+                </div>
+                <div>
+                    <dt>Teléfono</dt>
+                    <dd>{{ client.phone|default:"" }}</dd>
+                </div>
+                <div>
+                    <dt>Empresa</dt>
+                    <dd>{{ client.company.name|default:"" }}</dd>
+                </div>
+                <div>
+                    <dt>Cargo</dt>
+                    <dd>{{ client.position|default:"" }}</dd>
+                </div>
+                <div>
+                    <dt>Estado</dt>
+                    <dd>
+                        {% if client.status == "lead" %}
+                            Prospecto
+                        {% elif client.status == "contacted" %}
+                            Contactado
+                        {% elif client.status == "follow_up" %}
+                            Seguimiento
+                        {% elif client.status == "proposal" %}
+                            Propuesta
+                        {% elif client.status == "won" %}
+                            Ganado
+                        {% elif client.status == "lost" %}
+                            Perdido
+                        {% else %}
+                            {{ client.get_status_display }}
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Responsable</dt>
+                    <dd>{{ client.owner.get_username }}</dd>
+                </div>
+                <div>
+                    <dt>Fecha de creación</dt>
+                    <dd>{{ client.created_at|date:"d/m/Y H:i" }}</dd>
+                </div>
+                <div>
+                    <dt>Última actualización</dt>
+                    <dd>{{ client.updated_at|date:"d/m/Y H:i" }}</dd>
+                </div>
+            </dl>
+        </section>
+    </main>
+</body>
+</html>
