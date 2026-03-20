@@ -15,21 +15,22 @@ No debe crecer por acumulación.
 ## Estado actual
 
 - **Proyecto:** CRM Básico
-- **Fase actual:** arranque inicial cerrado y base mínima del proyecto lista para el siguiente microbloque técnico
-- **Estado técnico del repo:** remoto GitHub creado y enlazado como `origin`, último cierre técnico validado con `main` sincronizada con `origin/main`, `.gitignore` reforzado, `README.md` inicial creado y proyecto Django base operativo en raíz con app `crm` ya creada y registrada
-- **Estado funcional del CRM:** existe la app principal `crm`, pero todavía no se han definido modelos reales ni comportamiento funcional del producto
-- **Bloque actualmente abierto:** preparar la planificación corta del modelo conceptual técnico del CRM antes de crear modelos y migraciones
+- **Fase actual:** base del dominio del CRM ya implementada y validada, lista para abrir el siguiente microbloque funcional
+- **Estado técnico del repo:** proyecto Django operativo en raíz, app `crm` registrada, `DEFAULT_AUTO_FIELD` fijado en `config/settings.py`, modelos `Company`, `Client` e `Interaction` implementados, admin básico registrado y migración inicial del dominio creada y aplicada
+- **Estado funcional del CRM:** ya existe el núcleo de datos del sistema sobre `User`, `Company`, `Client` e `Interaction`, pero siguen pendientes CRUDs, vistas, formularios, URLs y buscador
+- **Bloque actualmente abierto:** preparar el siguiente microbloque corto sobre la capa funcional del CRM a partir del modelo de datos ya cerrado
 
 ---
 
 ## Objetivo inmediato
 
-Retomar el proyecto desde una base ya saneada y sincronizada para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
+Retomar el proyecto desde una base de dominio ya cerrada y validada para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
 
 - sistema documental local operativo
 - repo enlazado y sincronizado con GitHub desde `main`
-- saneamiento básico inicial del repo ya resuelto con `.gitignore` y `README.md`
-- app `crm` creada, registrada y validada con `python manage.py check`
+- app `crm` con modelos reales de dominio y migración inicial aplicada
+- validaciones de `makemigrations`, `migrate` y `check` ya resueltas sin incidencias
+- commit de cierre del bloque registrado como `af47c0a` con mensaje `Implement CRM domain models and initial migration`
 
 ---
 
@@ -50,12 +51,12 @@ Retomar el proyecto desde una base ya saneada y sincronizada para abrir el sigui
 
 ## Límites actuales
 
-- El CRM todavía no tiene modelos de dominio, flujos funcionales ni vistas de producto.
-- No se ha abierto todavía la implementación real del modelo del negocio.
+- El CRM ya tiene modelo de dominio base, pero todavía no tiene flujos funcionales ni vistas de producto.
+- No se han abierto todavía CRUDs, formularios, URLs ni comportamiento real de uso.
 - La siguiente sesión debe seguir en pasos pequeños y sin abrir complejidad innecesaria.
 
 ---
 
 ## Siguiente paso exacto
 
-Planificar en corto el modelo conceptual técnico del CRM y cerrar esa definición mínima antes de crear modelos reales y migraciones.
+Abrir el siguiente microbloque corto para aterrizar el CRUD básico de clientes sobre la base de dominio ya implementada.
