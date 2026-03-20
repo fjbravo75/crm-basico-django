@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Client, Company
+from .models import Client, Company, Interaction
 
 
 class ClientCreateFlowTests(TestCase):
@@ -168,3 +168,126 @@ class ClientUpdateFlowTests(TestCase):
 
         self.client_record.refresh_from_db()
         self.assertEqual(self.client_record.first_name, "Lucia")
+
+
+class ClientDeleteFlowTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="responsable",
+            password="testpass123",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.client_record = Client.objects.create(
+            first_name="Lucia",
+            last_name="Martinez",
+            email="lucia.martinez@example.com",
+            phone="+34 600 000 002",
+            position="Directora Comercial",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.CONTACTED,
+        )
+        self.interaction = Interaction.objects.create(
+            client=self.client_record,
+            created_by=self.owner,
+            interaction_type=Interaction.InteractionType.CALL,
+            subject="Llamada inicial",
+            summary="Seguimiento básico asociado al cliente.",
+        )
+
+    def test_client_detail_shows_link_to_delete_view(self):
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("crm:client_delete", args=[self.client_record.pk]))
+        self.assertContains(response, "Eliminar cliente")
+
+    def test_delete_confirmation_view_shows_client_and_cancel_link(self):
+        response = self.client.get(reverse("crm:client_delete", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Eliminar cliente")
+        self.assertContains(response, "Lucia Martinez")
+        self.assertContains(response, reverse("crm:client_detail", args=[self.client_record.pk]))
+        self.assertEqual(Client.objects.count(), 1)
+
+    def test_delete_view_removes_client_and_redirects_to_list(self):
+        response = self.client.post(reverse("crm:client_delete", args=[self.client_record.pk]))
+
+        self.assertRedirects(response, reverse("crm:client_list"))
+        self.assertFalse(Client.objects.filter(pk=self.client_record.pk).exists())
+        self.assertFalse(Interaction.objects.filter(pk=self.interaction.pk).exists())
+
+
+class ClientListPaginationTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="responsable",
+            password="testpass123",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+
+        for index in range(7):
+            Client.objects.create(
+                first_name=f"Cliente{index}",
+                last_name=f"Apellido{index}",
+                email=f"cliente{index}@example.com",
+                company=self.company,
+                owner=self.owner,
+                status=Client.Status.LEAD,
+            )
+
+        for index in range(6):
+            Client.objects.create(
+                first_name=f"Filtro{index}",
+                last_name=f"Busqueda{index}",
+                email=f"filtro{index}@example.com",
+                company=self.company,
+                owner=self.owner,
+                status=Client.Status.CONTACTED,
+            )
+
+        Client.objects.create(
+            first_name="Otro",
+            last_name="Registro",
+            email="otro@example.com",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.WON,
+        )
+
+    def test_client_list_paginates_to_five_items_per_page(self):
+        response = self.client.get(reverse("crm:client_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["clients"]), 5)
+        self.assertEqual(response.context["paginator"].per_page, 5)
+        self.assertContains(response, "14 clientes disponibles")
+
+    def test_second_page_shows_remaining_results(self):
+        response = self.client.get(reverse("crm:client_list"), {"page": 3})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["clients"]), 4)
+        self.assertContains(response, "Página 3 de 3")
+
+    def test_search_keeps_working_with_pagination(self):
+        response = self.client.get(reverse("crm:client_list"), {"q": "Filtro"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["clients"]), 5)
+        self.assertEqual(response.context["paginator"].count, 6)
+        self.assertContains(response, '6 clientes encontrados para "Filtro"')
+
+    def test_pagination_links_keep_search_query(self):
+        response = self.client.get(reverse("crm:client_list"), {"q": "Filtro"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "?q=Filtro&page=2")
+
+    def test_results_text_uses_total_count_not_page_length(self):
+        response = self.client.get(reverse("crm:client_list"), {"q": "Filtro"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '6 clientes encontrados para "Filtro"')
+        self.assertNotContains(response, '5 clientes encontrados para "Filtro"')

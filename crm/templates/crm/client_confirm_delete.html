@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Eliminar cliente | CRM Básico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f5f6f8;
+            color: #1f2933;
+        }
+
+        main {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 2rem 1rem 3rem;
+        }
+
+        h1 {
+            margin: 0 0 0.5rem;
+        }
+
+        .intro {
+            margin: 0 0 1.5rem;
+            color: #52606d;
+        }
+
+        .confirm-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        }
+
+        .client-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 0.75rem;
+            margin: 0 0 1.5rem;
+        }
+
+        .client-summary div {
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            min-width: 0;
+        }
+
+        .client-summary dt {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .client-summary dd {
+            margin: 0;
+            color: #52606d;
+            word-break: break-word;
+        }
+
+        .warning {
+            margin: 0 0 1.5rem;
+            color: #b42318;
+            font-weight: 700;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        button,
+        .button-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border: 0;
+            border-radius: 0.5rem;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .button-danger {
+            background: #b42318;
+        }
+
+        .button-secondary {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Eliminar cliente</h1>
+        <p class="intro">Confirma si quieres eliminar este cliente del flujo principal del CRM.</p>
+
+        <section class="confirm-card">
+            <dl class="client-summary">
+                <div>
+                    <dt>Cliente</dt>
+                    <dd>{{ client.first_name }} {{ client.last_name }}</dd>
+                </div>
+                <div>
+                    <dt>Correo</dt>
+                    <dd>{{ client.email|default:"Sin correo" }}</dd>
+                </div>
+                <div>
+                    <dt>Empresa</dt>
+                    <dd>{{ client.company.name|default:"Sin empresa" }}</dd>
+                </div>
+            </dl>
+
+            <p class="warning">Esta acción no se puede deshacer.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="actions">
+                    <button class="button-danger" type="submit">Eliminar cliente</button>
+                    <a class="button-link button-secondary" href="{% url 'crm:client_detail' client.pk %}">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from .forms import ClientForm
 from .models import Client
@@ -20,6 +20,7 @@ class ClientListView(ListView):
     model = Client
     template_name = "crm/client_list.html"
     context_object_name = "clients"
+    paginate_by = 5
 
     def get_queryset(self):
         queryset = (
@@ -41,6 +42,7 @@ class ClientListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["search_query"] = self.request.GET.get("q", "").strip()
+        context["total_clients"] = context["paginator"].count
         return context
 
 
@@ -99,3 +101,13 @@ class ClientUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse("crm:client_detail", kwargs={"pk": self.object.pk})
+
+
+class ClientDeleteView(DeleteView):
+    model = Client
+    template_name = "crm/client_confirm_delete.html"
+    context_object_name = "client"
+    success_url = reverse_lazy("crm:client_list")
+
+    def get_queryset(self):
+        return Client.objects.select_related("company", "owner")
