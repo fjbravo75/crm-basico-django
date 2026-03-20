@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, DetailView, ListView
+from django.urls import reverse, reverse_lazy
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from .forms import ClientForm
 from .models import Client
@@ -86,3 +86,16 @@ class ClientDetailView(DetailView):
 
     def get_queryset(self):
         return Client.objects.select_related("company", "owner")
+
+
+class ClientUpdateView(UpdateView):
+    model = Client
+    form_class = ClientForm
+    template_name = "crm/client_form.html"
+    context_object_name = "client"
+
+    def get_queryset(self):
+        return Client.objects.select_related("company", "owner")
+
+    def get_success_url(self):
+        return reverse("crm:client_detail", kwargs={"pk": self.object.pk})
