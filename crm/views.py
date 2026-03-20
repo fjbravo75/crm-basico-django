@@ -1,10 +1,12 @@
 from django.contrib.auth import get_user_model
+from django.core.paginator import Paginator
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from .forms import ClientForm
-from .models import Client
+from .forms import ClientForm, InteractionForm
+from .models import Client, Interaction
 
 
 DEFAULT_OWNER = {
@@ -14,6 +16,31 @@ DEFAULT_OWNER = {
     "last_name": "Ortega",
     "is_active": True,
 }
+
+
+def get_current_or_default_user(request):
+    if request.user.is_authenticated:
+        return request.user
+
+    user_model = get_user_model()
+    existing_user = user_model.objects.order_by("id").first()
+    if existing_user:
+        return existing_user
+
+    owner, created = user_model.objects.get_or_create(
+        username=DEFAULT_OWNER["username"],
+        defaults={
+            "email": DEFAULT_OWNER["email"],
+            "first_name": DEFAULT_OWNER["first_name"],
+            "last_name": DEFAULT_OWNER["last_name"],
+            "is_active": DEFAULT_OWNER["is_active"],
+        },
+    )
+    if created:
+        owner.set_unusable_password()
+        owner.save(update_fields=["password"])
+
+    return owner
 
 
 class ClientListView(ListView):
@@ -57,28 +84,7 @@ class ClientCreateView(CreateView):
         return super().form_valid(form)
 
     def _get_owner(self):
-        if self.request.user.is_authenticated:
-            return self.request.user
-
-        user_model = get_user_model()
-        existing_owner = user_model.objects.order_by("id").first()
-        if existing_owner:
-            return existing_owner
-
-        owner, created = user_model.objects.get_or_create(
-            username=DEFAULT_OWNER["username"],
-            defaults={
-                "email": DEFAULT_OWNER["email"],
-                "first_name": DEFAULT_OWNER["first_name"],
-                "last_name": DEFAULT_OWNER["last_name"],
-                "is_active": DEFAULT_OWNER["is_active"],
-            },
-        )
-        if created:
-            owner.set_unusable_password()
-            owner.save(update_fields=["password"])
-
-        return owner
+        return get_current_or_default_user(self.request)
 
 
 class ClientDetailView(DetailView):
@@ -88,6 +94,21 @@ class ClientDetailView(DetailView):
 
     def get_queryset(self):
         return Client.objects.select_related("company", "owner")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        interactions = self.object.interactions.select_related("created_by").order_by(
+            "-interaction_date",
+            "-pk",
+        )
+        paginator = Paginator(interactions, 3)
+        activity_page = self.request.GET.get("activity_page")
+        query_params = self.request.GET.copy()
+        query_params.pop("activity_page", None)
+
+        context["activity_page_obj"] = paginator.get_page(activity_page)
+        context["activity_query_string"] = query_params.urlencode()
+        return context
 
 
 class ClientUpdateView(UpdateView):
@@ -111,3 +132,29 @@ class ClientDeleteView(DeleteView):
 
     def get_queryset(self):
         return Client.objects.select_related("company", "owner")
+
+
+class InteractionCreateView(CreateView):
+    model = Interaction
+    form_class = InteractionForm
+    template_name = "crm/interaction_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.client = get_object_or_404(
+            Client.objects.select_related("company", "owner"),
+            pk=kwargs["client_pk"],
+        )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["client"] = self.client
+        return context
+
+    def form_valid(self, form):
+        form.instance.client = self.client
+        form.instance.created_by = get_current_or_default_user(self.request)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("crm:client_detail", kwargs={"pk": self.client.pk})

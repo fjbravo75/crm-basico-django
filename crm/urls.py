@@ -1,6 +1,13 @@
 from django.urls import path
 
-from .views import ClientCreateView, ClientDeleteView, ClientDetailView, ClientListView, ClientUpdateView
+from .views import (
+    ClientCreateView,
+    ClientDeleteView,
+    ClientDetailView,
+    ClientListView,
+    ClientUpdateView,
+    InteractionCreateView,
+)
 
 app_name = "crm"
 
@@ -10,4 +17,5 @@ urlpatterns = [
     path("clientes/<int:pk>/", ClientDetailView.as_view(), name="client_detail"),
     path("clientes/<int:pk>/editar/", ClientUpdateView.as_view(), name="client_update"),
     path("clientes/<int:pk>/eliminar/", ClientDeleteView.as_view(), name="client_delete"),
+    path("clientes/<int:client_pk>/interacciones/nueva/", InteractionCreateView.as_view(), name="interaction_create"),
 ]

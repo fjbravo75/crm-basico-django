@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from .models import Client, Company, Interaction
 
@@ -291,3 +292,147 @@ class ClientListPaginationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '6 clientes encontrados para "Filtro"')
         self.assertNotContains(response, '5 clientes encontrados para "Filtro"')
+
+
+class InteractionCreateFlowTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="responsable",
+            password="testpass123",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.client_record = Client.objects.create(
+            first_name="Lucia",
+            last_name="Martinez",
+            email="lucia.martinez@example.com",
+            phone="+34 600 000 002",
+            position="Directora Comercial",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.CONTACTED,
+        )
+
+    def test_client_detail_shows_empty_state_and_register_link(self):
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Actividad")
+        self.assertContains(response, "Todavía no hay actividad registrada.")
+        self.assertContains(response, reverse("crm:interaction_create", args=[self.client_record.pk]))
+
+    def test_client_detail_lists_existing_interactions(self):
+        Interaction.objects.create(
+            client=self.client_record,
+            created_by=self.owner,
+            interaction_type=Interaction.InteractionType.CALL,
+            subject="Llamada inicial",
+            summary="Se revisaron los próximos pasos del cliente.",
+            next_step="Enviar resumen por correo.",
+        )
+
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Llamada")
+        self.assertContains(response, "Llamada inicial")
+        self.assertContains(response, "Se revisaron los próximos pasos del cliente.")
+        self.assertContains(response, "Próximo paso:")
+        self.assertContains(response, "Enviar resumen por correo.")
+
+    def test_interaction_create_view_creates_record_and_redirects_to_client_detail(self):
+        response = self.client.post(
+            reverse("crm:interaction_create", args=[self.client_record.pk]),
+            data={
+                "interaction_type": Interaction.InteractionType.EMAIL,
+                "subject": "Correo de seguimiento",
+                "summary": "Se confirmó el interés en continuar con la propuesta.",
+                "next_step": "Preparar una demo corta.",
+            },
+        )
+
+        self.assertRedirects(response, reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        interaction = Interaction.objects.get(subject="Correo de seguimiento")
+        self.assertEqual(interaction.client, self.client_record)
+        self.assertEqual(interaction.created_by, self.owner)
+
+        detail_response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+        self.assertContains(detail_response, "Correo de seguimiento")
+
+    def test_interaction_create_view_rerenders_form_with_errors(self):
+        response = self.client.post(
+            reverse("crm:interaction_create", args=[self.client_record.pk]),
+            data={
+                "interaction_type": Interaction.InteractionType.NOTE,
+                "subject": "",
+                "summary": "",
+                "next_step": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors)
+        self.assertEqual(Interaction.objects.count(), 0)
+
+    def test_client_detail_paginates_activity_to_three_items(self):
+        for index in range(4):
+            Interaction.objects.create(
+                client=self.client_record,
+                created_by=self.owner,
+                interaction_type=Interaction.InteractionType.NOTE,
+                subject=f"Actividad {index + 1}",
+                summary=f"Resumen {index + 1}",
+                interaction_date=timezone.now() + timezone.timedelta(minutes=index),
+            )
+
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["activity_page_obj"].object_list), 3)
+        self.assertEqual(response.context["activity_page_obj"].paginator.per_page, 3)
+        self.assertContains(response, "Página 1 de 2")
+        self.assertContains(response, "Actividad 4")
+        self.assertContains(response, "Actividad 3")
+        self.assertContains(response, "Actividad 2")
+        self.assertNotContains(response, "Actividad 1")
+
+    def test_client_detail_second_activity_page_shows_remaining_records(self):
+        for index in range(4):
+            Interaction.objects.create(
+                client=self.client_record,
+                created_by=self.owner,
+                interaction_type=Interaction.InteractionType.NOTE,
+                subject=f"Seguimiento {index + 1}",
+                summary=f"Resumen {index + 1}",
+                interaction_date=timezone.now() + timezone.timedelta(minutes=index),
+            )
+
+        response = self.client.get(
+            reverse("crm:client_detail", args=[self.client_record.pk]),
+            {"activity_page": 2},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["activity_page_obj"].number, 2)
+        self.assertContains(response, "Página 2 de 2")
+        self.assertContains(response, "Seguimiento 1")
+        self.assertNotContains(response, "Seguimiento 4")
+
+    def test_activity_pagination_keeps_other_query_parameters(self):
+        for index in range(4):
+            Interaction.objects.create(
+                client=self.client_record,
+                created_by=self.owner,
+                interaction_type=Interaction.InteractionType.EMAIL,
+                subject=f"Correo {index + 1}",
+                summary=f"Resumen {index + 1}",
+                interaction_date=timezone.now() + timezone.timedelta(minutes=index),
+            )
+
+        response = self.client.get(
+            reverse("crm:client_detail", args=[self.client_record.pk]),
+            {"source": "demo"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "?source=demo&amp;activity_page=2")
