@@ -30,6 +30,7 @@ No debe contener resúmenes largos.
 
 ## Entradas
 
+- `2026-03-20__basic-client-detail-flow.md` — `session-2026-03-20-04` — detalle básico de cliente operativo, enlace desde el listado, validación técnica del bloque y cierre documental local
 - `2026-03-20__basic-client-create-flow.md` — `session-2026-03-20-03` — alta básica de clientes operativa, formulario server-rendered, validación real del flujo y cierre documental local
 - `2026-03-20__crm-demo-seed-and-session-close.md` — `session-2026-03-20-02` — management command de seed demo del CRM, validación repetible y cierre documental local del bloque
 - `2026-03-20__crm-domain-models-and-initial-migration.md` — `session-2026-03-20-01` — implementación del modelo de dominio base del CRM, migración inicial y validación técnica del bloque

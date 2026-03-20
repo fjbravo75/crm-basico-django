@@ -15,22 +15,22 @@ No debe crecer por acumulación.
 ## Estado actual
 
 - **Proyecto:** CRM Básico
-- **Fase actual:** listado y alta básica de clientes ya operativos, con búsqueda simple validada y datos demo cargables de forma repetible
-- **Estado técnico del repo:** proyecto Django operativo en raíz, app `crm` registrada, modelos `Company`, `Client` e `Interaction` implementados, listado de clientes activo en `/`, formulario de alta disponible en `clientes/nuevo/`, interfaz visible del flujo en español, management command `seed_demo_crm` disponible, y validaciones reales recientes ejecutadas sobre `check` y tests del flujo de alta
-- **Estado funcional del CRM:** existe un flujo básico compuesto por listado de clientes con búsqueda por nombre, correo o empresa y alta básica de cliente con formulario server-rendered, guardado correcto, redirección al listado y visibilidad inmediata del nuevo cliente en el flujo normal
-- **Bloque actualmente abierto:** cerrado el microbloque corto del alta básica de clientes sobre el listado existente
+- **Fase actual:** listado, alta básica y detalle básico de clientes ya operativos, con búsqueda simple validada y datos demo cargables de forma repetible
+- **Estado técnico del repo:** proyecto Django operativo en raíz, app `crm` registrada, modelos `Company`, `Client` e `Interaction` implementados, listado de clientes activo en `/`, formulario de alta disponible en `clientes/nuevo/`, detalle básico disponible en `clientes/<int:pk>/`, interfaz visible del flujo en español, management command `seed_demo_crm` disponible, y validaciones reales recientes ejecutadas sobre `check` y tests específicos de alta y detalle
+- **Estado funcional del CRM:** existe un flujo básico compuesto por listado de clientes con búsqueda por nombre, correo o empresa, alta básica con formulario server-rendered y detalle básico enlazado desde el listado, mostrando la información principal del cliente con una presentación sobria
+- **Bloque actualmente abierto:** cerrado el microbloque corto del detalle básico de cliente sobre el flujo ya compuesto por listado y alta
 
 ---
 
 ## Objetivo inmediato
 
-Retomar el proyecto desde un flujo base de clientes ya compuesto por listado y alta básica, con base demo repetible y validaciones recientes, para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
+Retomar el proyecto desde un flujo base de clientes ya compuesto por listado, alta básica y detalle básico, con base demo repetible y validaciones recientes, para abrir el siguiente microbloque técnico con orden y continuidad, partiendo de:
 
 - sistema documental local operativo
 - repo enlazado y sincronizado con GitHub desde `main`
-- app `crm` con dominio base, listado, búsqueda simple y alta básica ya resueltos
+- app `crm` con dominio base, listado, búsqueda simple, alta básica y detalle básico ya resueltos
 - comando `python manage.py seed_demo_crm` implementado y validado de forma repetible
-- validaciones reales recientes ejecutadas sobre `.venv/bin/python manage.py check` y `.venv/bin/python manage.py test crm.tests.ClientCreateFlowTests`
+- validaciones reales recientes ejecutadas sobre `.venv/bin/python manage.py check`, `.venv/bin/python manage.py test crm.tests.ClientCreateFlowTests` y `.venv/bin/python manage.py test crm.tests.ClientDetailFlowTests`
 
 ---
 
@@ -52,13 +52,14 @@ Retomar el proyecto desde un flujo base de clientes ya compuesto por listado y a
 
 ## Límites actuales
 
-- El CRM ya tiene listado, búsqueda simple y alta básica de clientes, pero todavía no tiene detalle, edición ni borrado de cliente.
+- El CRM ya tiene listado, búsqueda simple, alta básica y detalle básico de clientes, pero todavía no tiene edición ni borrado de cliente.
 - La resolución automática de `owner` en el alta es una solución puente para sostener el flujo actual, no un diseño final de negocio.
 - No se ha abierto todavía un flujo CRUD completo ni autenticación o permisos de producto.
+- No se abrió todavía CRUD visible de interacciones, estadísticas ni exportaciones.
 - La continuidad debe seguir en microbloques cortos y sin salir del eje principal de clientes.
 
 ---
 
 ## Siguiente paso exacto
 
-Abrir el microbloque corto del detalle básico de cliente.
+Abrir el microbloque corto de edición básica de cliente sobre el flujo ya compuesto por listado, alta y detalle.
