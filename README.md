@@ -8,7 +8,6 @@ Arranque inicial completado:
 - repositorio local Git inicializado
 - repositorio remoto en GitHub conectado
 - proyecto base de Django creado
-- sistema de memoria local del proyecto configurado
 
 ## Objetivo
 
