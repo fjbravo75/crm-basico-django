@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}CRM Básico{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'crm/ui_system.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <main class="app-shell">
+        <header class="app-header">
+            <a class="app-brand" href="{% url 'crm:client_list' %}">CRM Básico</a>
+            <nav class="app-nav" aria-label="Acciones globales">
+                {% block header_actions %}{% endblock %}
+            </nav>
+        </header>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
