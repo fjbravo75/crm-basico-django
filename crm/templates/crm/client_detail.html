@@ -1,283 +1,25 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ client.first_name }} {{ client.last_name }} | CRM Básico</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: #f5f6f8;
-            color: #1f2933;
-        }
+{% extends "crm/base_app.html" %}
 
-        main {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 2rem 1rem 3rem;
-        }
+{% block title %}{{ client.first_name }} {{ client.last_name }} | CRM Básico{% endblock %}
 
-        h1 {
-            margin: 0 0 0.5rem;
-        }
-
-        .intro {
-            color: #52606d;
-            margin: 0;
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .page-actions {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .button-link {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            background: #6b7280;
-            color: #fff;
-            text-decoration: none;
-            font-size: 0.95rem;
-        }
-
-        .button-danger {
-            background: #b42318;
-        }
-
-        .detail-card {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-        }
-
-        .detail-card + .detail-card {
-            margin-top: 1.5rem;
-        }
-
-        .status {
-            display: inline-flex;
-            margin-bottom: 1rem;
-            background: #e0f2fe;
-            color: #075985;
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-            font-size: 0.9rem;
-        }
-
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 0.75rem;
-            margin: 0;
-        }
-
-        .detail-grid div {
-            background: #f8fafc;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-        }
-
-        .detail-grid dt {
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-
-        .detail-grid dd {
-            margin: 0;
-            color: #52606d;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .section-title {
-            margin: 0 0 0.35rem;
-            font-size: 1.2rem;
-        }
-
-        .section-intro {
-            margin: 0;
-            color: #52606d;
-        }
-
-        .interaction-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: grid;
-            gap: 0.9rem;
-        }
-
-        .interaction-item {
-            background: #f8fafc;
-            padding: 1rem;
-            border-radius: 0.5rem;
-        }
-
-        .interaction-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin-bottom: 0.5rem;
-            color: #52606d;
-        }
-
-        .interaction-meta strong {
-            color: #3e4c59;
-            font-size: 0.95rem;
-        }
-
-        .interaction-subject {
-            margin: 0 0 0.45rem;
-            color: #1f2933;
-            font-weight: 700;
-            line-height: 1.4;
-        }
-
-        .interaction-summary {
-            margin: 0 0 0.7rem;
-            color: #52606d;
-            line-height: 1.55;
-        }
-
-        .interaction-summary p {
-            margin: 0 0 0.6rem;
-        }
-
-        .interaction-summary p:last-child {
-            margin-bottom: 0;
-        }
-
-        .interaction-next-step {
-            margin: 0 0 0.55rem;
-            color: #3e4c59;
-            line-height: 1.45;
-        }
-
-        .interaction-next-step strong {
-            color: #1f2933;
-        }
-
-        .interaction-author {
-            margin: 0;
-            color: #7b8794;
-            font-size: 0.95rem;
-        }
-
-        .empty-copy {
-            margin: 0;
-            color: #52606d;
-        }
-
-        .activity-pagination {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.9rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .activity-pagination-status {
-            color: #52606d;
-            font-size: 0.95rem;
-        }
-
-        .activity-pagination-link {
-            color: #1f2933;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .activity-pagination-link:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <main>
-        <div class="page-header">
+{% block content %}
+    <section class="page-section page-section--detail content-frame">
+        <div class="page-header-row page-header-row--detail">
             <div>
-                <h1>{{ client.first_name }} {{ client.last_name }}</h1>
-                <p class="intro">Detalle básico del cliente dentro del flujo principal del CRM.</p>
+                <h1 class="page-title">{{ client.first_name }} {{ client.last_name }}</h1>
+                <p class="page-intro">Detalle básico del cliente dentro del flujo principal del CRM.</p>
             </div>
-            <div class="page-actions">
-                <a class="button-link" href="{% url 'crm:client_update' client.pk %}">Editar cliente</a>
-                <a class="button-link button-danger" href="{% url 'crm:client_delete' client.pk %}">Eliminar cliente</a>
-                <a class="button-link" href="{% url 'crm:client_list' %}">Volver al listado</a>
+            <div class="button-row button-row--end button-row--detail-actions">
+                <a class="button button--secondary button--compact" href="{% url 'crm:client_update' client.pk %}">Editar cliente</a>
+                <a class="button button--danger-soft button--compact" href="{% url 'crm:client_delete' client.pk %}">Eliminar cliente</a>
+                <a class="button button--secondary button--compact" href="{% url 'crm:client_list' %}">Volver al listado</a>
             </div>
         </div>
 
-        <section class="detail-card">
-            <span class="status">
-                {% if client.status == "lead" %}
-                    Prospecto
-                {% elif client.status == "contacted" %}
-                    Contactado
-                {% elif client.status == "follow_up" %}
-                    Seguimiento
-                {% elif client.status == "proposal" %}
-                    Propuesta
-                {% elif client.status == "won" %}
-                    Ganado
-                {% elif client.status == "lost" %}
-                    Perdido
-                {% else %}
-                    {{ client.get_status_display }}
-                {% endif %}
-            </span>
-
-            <dl class="detail-grid">
-                <div>
-                    <dt>Nombre</dt>
-                    <dd>{{ client.first_name|default:"" }}</dd>
-                </div>
-                <div>
-                    <dt>Apellidos</dt>
-                    <dd>{{ client.last_name|default:"" }}</dd>
-                </div>
-                <div>
-                    <dt>Correo</dt>
-                    <dd>{{ client.email|default:"" }}</dd>
-                </div>
-                <div>
-                    <dt>Teléfono</dt>
-                    <dd>{{ client.phone|default:"" }}</dd>
-                </div>
-                <div>
-                    <dt>Empresa</dt>
-                    <dd>{{ client.company.name|default:"" }}</dd>
-                </div>
-                <div>
-                    <dt>Cargo</dt>
-                    <dd>{{ client.position|default:"" }}</dd>
-                </div>
-                <div>
-                    <dt>Estado</dt>
-                    <dd>
+        <section class="panel">
+            <div class="panel__body panel__body--stack">
+                <div class="badge-row">
+                    <span class="badge">
                         {% if client.status == "lead" %}
                             Prospecto
                         {% elif client.status == "contacted" %}
@@ -293,78 +35,128 @@
                         {% else %}
                             {{ client.get_status_display }}
                         {% endif %}
-                    </dd>
+                    </span>
                 </div>
-                <div>
-                    <dt>Responsable</dt>
-                    <dd>{{ client.owner.get_username }}</dd>
-                </div>
-                <div>
-                    <dt>Fecha de creación</dt>
-                    <dd>{{ client.created_at|date:"d/m/Y H:i" }}</dd>
-                </div>
-                <div>
-                    <dt>Última actualización</dt>
-                    <dd>{{ client.updated_at|date:"d/m/Y H:i" }}</dd>
-                </div>
-            </dl>
-        </section>
 
-        <section class="detail-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">Actividad</h2>
-                    <p class="section-intro">Seguimiento básico registrado para este cliente.</p>
-                </div>
-                <a class="button-link" href="{% url 'crm:interaction_create' client.pk %}">Registrar actividad</a>
-            </div>
-
-            {% if activity_page_obj.object_list %}
-                <ul class="interaction-list">
-                    {% for interaction in activity_page_obj %}
-                        <li class="interaction-item">
-                            <div class="interaction-meta">
-                                <strong>
-                                    {% if interaction.interaction_type == "call" %}
-                                        Llamada
-                                    {% elif interaction.interaction_type == "email" %}
-                                        Correo
-                                    {% elif interaction.interaction_type == "meeting" %}
-                                        Reunión
-                                    {% elif interaction.interaction_type == "note" %}
-                                        Nota
-                                    {% elif interaction.interaction_type == "follow_up" %}
-                                        Seguimiento
-                                    {% else %}
-                                        {{ interaction.get_interaction_type_display }}
-                                    {% endif %}
-                                </strong>
-                                <span>{{ interaction.interaction_date|date:"d/m/Y H:i" }}</span>
-                            </div>
-                            <p class="interaction-subject">{{ interaction.subject }}</p>
-                            <div class="interaction-summary">{{ interaction.summary|linebreaks }}</div>
-                            {% if interaction.next_step %}
-                                <p class="interaction-next-step"><strong>Próximo paso:</strong> {{ interaction.next_step }}</p>
-                            {% endif %}
-                            <p class="interaction-author">Registrada por {{ interaction.created_by.get_username }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-                {% if activity_page_obj.paginator.num_pages > 1 %}
-                    <div class="activity-pagination">
-                        {% if activity_page_obj.has_previous %}
-                            <a class="activity-pagination-link" href="?{% if activity_query_string %}{{ activity_query_string }}&amp;{% endif %}activity_page={{ activity_page_obj.previous_page_number }}">Anterior</a>
-                        {% endif %}
-                        <span class="activity-pagination-status">Página {{ activity_page_obj.number }} de {{ activity_page_obj.paginator.num_pages }}</span>
-                        {% if activity_page_obj.has_next %}
-                            <a class="activity-pagination-link" href="?{% if activity_query_string %}{{ activity_query_string }}&amp;{% endif %}activity_page={{ activity_page_obj.next_page_number }}">Siguiente</a>
-                        {% endif %}
+                <dl class="data-grid data-grid--detail">
+                    <div class="data-pair">
+                        <dt class="data-label">Nombre</dt>
+                        <dd class="data-value">{{ client.first_name|default:"" }}</dd>
                     </div>
-                {% endif %}
-            {% else %}
-                <p class="empty-copy">Todavía no hay actividad registrada.</p>
-            {% endif %}
+                    <div class="data-pair">
+                        <dt class="data-label">Apellidos</dt>
+                        <dd class="data-value">{{ client.last_name|default:"" }}</dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Correo</dt>
+                        <dd class="data-value">{{ client.email|default:"" }}</dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Teléfono</dt>
+                        <dd class="data-value">{{ client.phone|default:"" }}</dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Empresa</dt>
+                        <dd class="data-value">{{ client.company.name|default:"" }}</dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Cargo</dt>
+                        <dd class="data-value">{{ client.position|default:"" }}</dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Estado</dt>
+                        <dd class="data-value">
+                            {% if client.status == "lead" %}
+                                Prospecto
+                            {% elif client.status == "contacted" %}
+                                Contactado
+                            {% elif client.status == "follow_up" %}
+                                Seguimiento
+                            {% elif client.status == "proposal" %}
+                                Propuesta
+                            {% elif client.status == "won" %}
+                                Ganado
+                            {% elif client.status == "lost" %}
+                                Perdido
+                            {% else %}
+                                {{ client.get_status_display }}
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Responsable</dt>
+                        <dd class="data-value">{{ client.owner.get_username }}</dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Fecha de creación</dt>
+                        <dd class="data-value">{{ client.created_at|date:"d/m/Y H:i" }}</dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Última actualización</dt>
+                        <dd class="data-value">{{ client.updated_at|date:"d/m/Y H:i" }}</dd>
+                    </div>
+                </dl>
+            </div>
         </section>
-    </main>
-</body>
-</html>
+
+        <section class="panel panel--activity">
+            <div class="panel__body panel__body--stack">
+                <div class="page-header-row">
+                    <div>
+                        <h2 class="section-title">Actividad</h2>
+                        <p class="section-intro">Seguimiento básico registrado para este cliente.</p>
+                    </div>
+                    <a class="button button--primary button--compact" href="{% url 'crm:interaction_create' client.pk %}">Registrar actividad</a>
+                </div>
+
+                {% if activity_page_obj.object_list %}
+                    <ul class="activity-list">
+                        {% for interaction in activity_page_obj %}
+                            <li class="card">
+                                <div class="card__body activity-card">
+                                    <div class="activity-card__meta">
+                                        <strong class="activity-card__type">
+                                            {% if interaction.interaction_type == "call" %}
+                                                Llamada
+                                            {% elif interaction.interaction_type == "email" %}
+                                                Correo
+                                            {% elif interaction.interaction_type == "meeting" %}
+                                                Reunión
+                                            {% elif interaction.interaction_type == "note" %}
+                                                Nota
+                                            {% elif interaction.interaction_type == "follow_up" %}
+                                                Seguimiento
+                                            {% else %}
+                                                {{ interaction.get_interaction_type_display }}
+                                            {% endif %}
+                                        </strong>
+                                        <span>{{ interaction.interaction_date|date:"d/m/Y H:i" }}</span>
+                                    </div>
+                                    <p class="activity-card__title">{{ interaction.subject }}</p>
+                                    <div class="activity-card__summary">{{ interaction.summary|linebreaks }}</div>
+                                    {% if interaction.next_step %}
+                                        <p class="activity-card__next-step"><strong>Próximo paso:</strong> {{ interaction.next_step }}</p>
+                                    {% endif %}
+                                    <p class="activity-card__author">Registrada por {{ interaction.created_by.get_username }}</p>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% if activity_page_obj.paginator.num_pages > 1 %}
+                        <nav class="pagination" aria-label="Paginación de actividad">
+                            {% if activity_page_obj.has_previous %}
+                                <a class="pagination__link" href="?{% if activity_query_string %}{{ activity_query_string }}&amp;{% endif %}activity_page={{ activity_page_obj.previous_page_number }}">Anterior</a>
+                            {% endif %}
+                            <span class="pagination__status">Página {{ activity_page_obj.number }} de {{ activity_page_obj.paginator.num_pages }}</span>
+                            {% if activity_page_obj.has_next %}
+                                <a class="pagination__link" href="?{% if activity_query_string %}{{ activity_query_string }}&amp;{% endif %}activity_page={{ activity_page_obj.next_page_number }}">Siguiente</a>
+                            {% endif %}
+                        </nav>
+                    {% endif %}
+                {% else %}
+                    <p class="client-detail-empty-copy">Todavía no hay actividad registrada.</p>
+                {% endif %}
+            </div>
+        </section>
+    </section>
+{% endblock %}

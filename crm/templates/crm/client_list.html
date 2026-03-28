@@ -3,7 +3,7 @@
 {% block title %}Clientes | CRM Básico{% endblock %}
 
 {% block content %}
-    <section class="page-section">
+    <section class="page-section content-frame">
         <div class="page-header-row">
             <div>
                 <h1 class="page-title">Clientes</h1>
@@ -107,11 +107,11 @@
             {% if is_paginated %}
                 <nav class="pagination" aria-label="Paginación de clientes">
                     {% if page_obj.has_previous %}
-                        <a class="button button--secondary button--compact" href="{% if search_query %}?q={{ search_query }}&page={{ page_obj.previous_page_number }}{% else %}?page={{ page_obj.previous_page_number }}{% endif %}">Anterior</a>
+                        <a class="pagination__link" href="{% if search_query %}?q={{ search_query }}&page={{ page_obj.previous_page_number }}{% else %}?page={{ page_obj.previous_page_number }}{% endif %}">Anterior</a>
                     {% endif %}
                     <span class="pagination__status">Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
                     {% if page_obj.has_next %}
-                        <a class="button button--secondary button--compact" href="{% if search_query %}?q={{ search_query }}&page={{ page_obj.next_page_number }}{% else %}?page={{ page_obj.next_page_number }}{% endif %}">Siguiente</a>
+                        <a class="pagination__link" href="{% if search_query %}?q={{ search_query }}&page={{ page_obj.next_page_number }}{% else %}?page={{ page_obj.next_page_number }}{% endif %}">Siguiente</a>
                     {% endif %}
                 </nav>
             {% endif %}
