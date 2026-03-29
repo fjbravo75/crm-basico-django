@@ -11,10 +11,23 @@
 <body>
     <main class="app-shell">
         <header class="app-header content-frame">
-            <a class="app-brand" href="{% url 'crm:client_list' %}">Gestor de clientes</a>
-            <nav class="app-nav" aria-label="Acciones globales">
-                {% block header_actions %}{% endblock %}
-            </nav>
+            <a class="app-brand" href="{% if user.is_authenticated %}{% url 'crm:client_list' %}{% else %}{% url 'login' %}{% endif %}">Gestor de clientes</a>
+            {% with current_url_name=request.resolver_match.url_name %}
+            {% if user.is_authenticated or current_url_name != "login" and current_url_name != "register" %}
+                <nav class="app-nav" aria-label="Acciones globales">
+                    {% if user.is_authenticated %}
+                        <span class="app-nav__session">Sesión iniciada como {{ user.get_username }}</span>
+                        <form class="app-nav__form" method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button class="button button--secondary button--compact" type="submit">Cerrar sesión</button>
+                        </form>
+                    {% else %}
+                        <a class="button button--secondary button--compact" href="{% url 'login' %}">Iniciar sesión</a>
+                    {% endif %}
+                    {% block header_actions %}{% endblock %}
+                </nav>
+            {% endif %}
+            {% endwith %}
         </header>
 
         {% block content %}{% endblock %}

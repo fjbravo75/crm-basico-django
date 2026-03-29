@@ -1,59 +1,52 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from .forms import ClientForm, InteractionForm
+from .forms import ClientForm, InteractionForm, RegisterForm
 from .models import Client, Interaction
 
 
-DEFAULT_OWNER = {
-    "username": "maria.ortega",
-    "email": "maria.ortega@demo-crm.example",
-    "first_name": "Maria",
-    "last_name": "Ortega",
-    "is_active": True,
-}
-
-
-def get_current_or_default_user(request):
+def register(request):
     if request.user.is_authenticated:
-        return request.user
+        return redirect("crm:client_list")
 
-    user_model = get_user_model()
-    existing_user = user_model.objects.order_by("id").first()
-    if existing_user:
-        return existing_user
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            return redirect("crm:client_list")
+    else:
+        form = RegisterForm()
 
-    owner, created = user_model.objects.get_or_create(
-        username=DEFAULT_OWNER["username"],
-        defaults={
-            "email": DEFAULT_OWNER["email"],
-            "first_name": DEFAULT_OWNER["first_name"],
-            "last_name": DEFAULT_OWNER["last_name"],
-            "is_active": DEFAULT_OWNER["is_active"],
-        },
-    )
-    if created:
-        owner.set_unusable_password()
-        owner.save(update_fields=["password"])
-
-    return owner
+    return render(request, "registration/register.html", {"form": form})
 
 
-class ClientListView(ListView):
+def get_owned_clients_queryset(user):
+    return Client.objects.select_related("company", "owner").filter(owner=user)
+
+
+def get_owned_interactions_queryset(user):
+    return Interaction.objects.select_related(
+        "client",
+        "client__company",
+        "client__owner",
+        "created_by",
+    ).filter(client__owner=user)
+
+
+class ClientListView(LoginRequiredMixin, ListView):
     model = Client
     template_name = "crm/client_list.html"
     context_object_name = "clients"
     paginate_by = 5
 
     def get_queryset(self):
-        queryset = (
-            Client.objects.select_related("company", "owner")
-            .all()
-        )
+        queryset = get_owned_clients_queryset(self.request.user)
         search_query = self.request.GET.get("q", "").strip()
 
         if search_query:
@@ -73,27 +66,24 @@ class ClientListView(ListView):
         return context
 
 
-class ClientCreateView(CreateView):
+class ClientCreateView(LoginRequiredMixin, CreateView):
     model = Client
     form_class = ClientForm
     template_name = "crm/client_form.html"
     success_url = reverse_lazy("crm:client_list")
 
     def form_valid(self, form):
-        form.instance.owner = self._get_owner()
+        form.instance.owner = self.request.user
         return super().form_valid(form)
 
-    def _get_owner(self):
-        return get_current_or_default_user(self.request)
 
-
-class ClientDetailView(DetailView):
+class ClientDetailView(LoginRequiredMixin, DetailView):
     model = Client
     template_name = "crm/client_detail.html"
     context_object_name = "client"
 
     def get_queryset(self):
-        return Client.objects.select_related("company", "owner")
+        return get_owned_clients_queryset(self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -111,70 +101,63 @@ class ClientDetailView(DetailView):
         return context
 
 
-class ClientUpdateView(UpdateView):
+class ClientUpdateView(LoginRequiredMixin, UpdateView):
     model = Client
     form_class = ClientForm
     template_name = "crm/client_form.html"
     context_object_name = "client"
 
     def get_queryset(self):
-        return Client.objects.select_related("company", "owner")
+        return get_owned_clients_queryset(self.request.user)
 
     def get_success_url(self):
         return reverse("crm:client_detail", kwargs={"pk": self.object.pk})
 
 
-class ClientDeleteView(DeleteView):
+class ClientDeleteView(LoginRequiredMixin, DeleteView):
     model = Client
     template_name = "crm/client_confirm_delete.html"
     context_object_name = "client"
     success_url = reverse_lazy("crm:client_list")
 
     def get_queryset(self):
-        return Client.objects.select_related("company", "owner")
+        return get_owned_clients_queryset(self.request.user)
 
 
-class InteractionCreateView(CreateView):
+class InteractionCreateView(LoginRequiredMixin, CreateView):
     model = Interaction
     form_class = InteractionForm
     template_name = "crm/interaction_form.html"
 
-    def dispatch(self, request, *args, **kwargs):
-        self.client = get_object_or_404(
-            Client.objects.select_related("company", "owner"),
-            pk=kwargs["client_pk"],
-        )
-        return super().dispatch(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["client"] = self.client
+        context["client"] = self.get_client()
         return context
 
     def form_valid(self, form):
-        form.instance.client = self.client
-        form.instance.created_by = get_current_or_default_user(self.request)
+        form.instance.client = self.get_client()
+        form.instance.created_by = self.request.user
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse("crm:client_detail", kwargs={"pk": self.client.pk})
+        return reverse("crm:client_detail", kwargs={"pk": self.get_client().pk})
+
+    def get_client(self):
+        return get_object_or_404(
+            get_owned_clients_queryset(self.request.user),
+            pk=self.kwargs["client_pk"],
+        )
 
 
-class InteractionUpdateView(UpdateView):
+class InteractionUpdateView(LoginRequiredMixin, UpdateView):
     model = Interaction
     form_class = InteractionForm
     template_name = "crm/interaction_form.html"
     context_object_name = "interaction"
 
     def get_queryset(self):
-        return (
-            Interaction.objects.select_related(
-                "client",
-                "client__company",
-                "client__owner",
-                "created_by",
-            )
-            .filter(client_id=self.kwargs["client_pk"])
+        return get_owned_interactions_queryset(self.request.user).filter(
+            client_id=self.kwargs["client_pk"]
         )
 
     def get_context_data(self, **kwargs):
@@ -186,20 +169,14 @@ class InteractionUpdateView(UpdateView):
         return reverse("crm:client_detail", kwargs={"pk": self.object.client_id})
 
 
-class InteractionDeleteView(DeleteView):
+class InteractionDeleteView(LoginRequiredMixin, DeleteView):
     model = Interaction
     template_name = "crm/interaction_confirm_delete.html"
     context_object_name = "interaction"
 
     def get_queryset(self):
-        return (
-            Interaction.objects.select_related(
-                "client",
-                "client__company",
-                "client__owner",
-                "created_by",
-            )
-            .filter(client_id=self.kwargs["client_pk"])
+        return get_owned_interactions_queryset(self.request.user).filter(
+            client_id=self.kwargs["client_pk"]
         )
 
     def get_context_data(self, **kwargs):

@@ -6,13 +6,155 @@ from django.utils import timezone
 from .models import Client, Company, Interaction
 
 
-class ClientCreateFlowTests(TestCase):
-    def setUp(self):
-        self.owner = get_user_model().objects.create_user(
-            username="responsable",
-            password="testpass123",
+class CRMBaseTestCase(TestCase):
+    password = "testpass123"
+
+    def create_user(self, username="responsable"):
+        return get_user_model().objects.create_user(
+            username=username,
+            password=self.password,
         )
+
+    def login_user(self, user=None):
+        self.client.force_login(user or self.owner)
+
+    def assert_login_redirect(self, response, target_url):
+        self.assertRedirects(response, f"{reverse('login')}?next={target_url}")
+
+
+class AuthenticationAccessTests(CRMBaseTestCase):
+    def setUp(self):
+        self.owner = self.create_user()
         self.company = Company.objects.create(name="Empresa Demo")
+
+    def test_login_view_renders_form_in_spanish(self):
+        response = self.client.get(reverse("login"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Iniciar sesión")
+        self.assertContains(response, "Usuario")
+        self.assertContains(response, "Contraseña")
+        self.assertContains(response, reverse("register"))
+
+    def test_anonymous_user_is_redirected_to_login_from_client_list(self):
+        response = self.client.get(reverse("crm:client_list"))
+
+        self.assert_login_redirect(response, reverse("crm:client_list"))
+
+    def test_anonymous_post_to_client_create_does_not_create_client(self):
+        response = self.client.post(
+            reverse("crm:client_create"),
+            data={
+                "first_name": "Ana",
+                "last_name": "Torres",
+                "email": "ana.torres@example.com",
+                "phone": "+34 600 000 001",
+                "position": "Gerente Comercial",
+                "company": self.company.pk,
+                "status": Client.Status.LEAD,
+                "source": Client.Source.REFERRAL,
+                "notes": "Alta bloqueada por falta de autenticación.",
+            },
+        )
+
+        self.assert_login_redirect(response, reverse("crm:client_create"))
+        self.assertFalse(Client.objects.filter(email="ana.torres@example.com").exists())
+
+    def test_login_view_authenticates_and_redirects_to_client_list(self):
+        response = self.client.post(
+            reverse("login"),
+            data={
+                "username": self.owner.username,
+                "password": self.password,
+            },
+        )
+
+        self.assertRedirects(response, reverse("crm:client_list"))
+
+        list_response = self.client.get(reverse("crm:client_list"))
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, "Clientes")
+        self.assertContains(list_response, self.owner.get_username())
+        self.assertContains(list_response, "Cerrar sesión")
+
+    def test_logout_closes_session_and_redirects_to_login(self):
+        self.assertTrue(
+            self.client.login(
+                username=self.owner.username,
+                password=self.password,
+            )
+        )
+
+        response = self.client.post(reverse("logout"))
+
+        self.assertRedirects(response, reverse("login"))
+
+        protected_response = self.client.get(reverse("crm:client_list"))
+        self.assert_login_redirect(protected_response, reverse("crm:client_list"))
+
+
+class RegistrationFlowTests(CRMBaseTestCase):
+    registration_password = "ClaveTemporal123"
+
+    def test_register_view_renders_form_for_anonymous_user(self):
+        response = self.client.get(reverse("register"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "registration/register.html")
+        self.assertContains(response, "Crear cuenta")
+        self.assertContains(response, "Crea tu acceso")
+        self.assertContains(response, reverse("login"))
+
+    def test_register_valid_post_creates_user_logs_them_in_and_redirects(self):
+        response = self.client.post(
+            reverse("register"),
+            data={
+                "username": "nuevo-comercial",
+                "password1": self.registration_password,
+                "password2": self.registration_password,
+            },
+        )
+
+        self.assertRedirects(response, reverse("crm:client_list"))
+
+        user = get_user_model().objects.get(username="nuevo-comercial")
+        self.assertEqual(str(user.pk), self.client.session.get("_auth_user_id"))
+
+        list_response = self.client.get(reverse("crm:client_list"))
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, user.get_username())
+        self.assertContains(list_response, "Cerrar sesión")
+
+    def test_register_invalid_post_shows_errors_and_does_not_create_user(self):
+        response = self.client.post(
+            reverse("register"),
+            data={
+                "username": "nuevo-comercial",
+                "password1": self.registration_password,
+                "password2": "otra-clave-123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "registration/register.html")
+        self.assertTrue(response.context["form"].errors)
+        self.assertContains(response, "Las contraseñas no coinciden")
+        self.assertFalse(get_user_model().objects.filter(username="nuevo-comercial").exists())
+
+    def test_authenticated_user_is_redirected_from_register_to_client_list(self):
+        self.owner = self.create_user()
+        self.login_user()
+
+        response = self.client.get(reverse("register"))
+
+        self.assertRedirects(response, reverse("crm:client_list"))
+
+
+class ClientCreateFlowTests(CRMBaseTestCase):
+    def setUp(self):
+        self.owner = self.create_user()
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.login_user()
 
     def test_client_list_shows_link_to_create_view(self):
         response = self.client.get(reverse("crm:client_list"))
@@ -48,12 +190,9 @@ class ClientCreateFlowTests(TestCase):
         self.assertContains(list_response, "Torres")
 
 
-class ClientDetailFlowTests(TestCase):
+class ClientDetailFlowTests(CRMBaseTestCase):
     def setUp(self):
-        self.owner = get_user_model().objects.create_user(
-            username="responsable",
-            password="testpass123",
-        )
+        self.owner = self.create_user()
         self.company = Company.objects.create(name="Empresa Demo")
         self.client_record = Client.objects.create(
             first_name="Lucia",
@@ -65,6 +204,7 @@ class ClientDetailFlowTests(TestCase):
             owner=self.owner,
             status=Client.Status.CONTACTED,
         )
+        self.login_user()
 
     def test_client_list_shows_link_to_detail_view(self):
         response = self.client.get(reverse("crm:client_list"))
@@ -87,12 +227,9 @@ class ClientDetailFlowTests(TestCase):
         self.assertContains(response, self.owner.get_username())
 
 
-class ClientUpdateFlowTests(TestCase):
+class ClientUpdateFlowTests(CRMBaseTestCase):
     def setUp(self):
-        self.owner = get_user_model().objects.create_user(
-            username="responsable",
-            password="testpass123",
-        )
+        self.owner = self.create_user()
         self.company = Company.objects.create(name="Empresa Demo")
         self.other_company = Company.objects.create(name="Empresa Actualizada")
         self.client_record = Client.objects.create(
@@ -105,6 +242,7 @@ class ClientUpdateFlowTests(TestCase):
             owner=self.owner,
             status=Client.Status.CONTACTED,
         )
+        self.login_user()
 
     def test_client_detail_shows_link_to_update_view(self):
         response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
@@ -171,12 +309,9 @@ class ClientUpdateFlowTests(TestCase):
         self.assertEqual(self.client_record.first_name, "Lucia")
 
 
-class ClientDeleteFlowTests(TestCase):
+class ClientDeleteFlowTests(CRMBaseTestCase):
     def setUp(self):
-        self.owner = get_user_model().objects.create_user(
-            username="responsable",
-            password="testpass123",
-        )
+        self.owner = self.create_user()
         self.company = Company.objects.create(name="Empresa Demo")
         self.client_record = Client.objects.create(
             first_name="Lucia",
@@ -195,6 +330,7 @@ class ClientDeleteFlowTests(TestCase):
             subject="Llamada inicial",
             summary="Seguimiento básico asociado al cliente.",
         )
+        self.login_user()
 
     def test_client_detail_shows_link_to_delete_view(self):
         response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
@@ -220,12 +356,109 @@ class ClientDeleteFlowTests(TestCase):
         self.assertFalse(Interaction.objects.filter(pk=self.interaction.pk).exists())
 
 
-class ClientListPaginationTests(TestCase):
+class OwnershipAccessTests(CRMBaseTestCase):
     def setUp(self):
-        self.owner = get_user_model().objects.create_user(
-            username="responsable",
-            password="testpass123",
+        self.owner = self.create_user()
+        self.other_user = self.create_user(username="otro-responsable")
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.owned_client = Client.objects.create(
+            first_name="Lucia",
+            last_name="Martinez",
+            email="lucia.martinez@example.com",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.CONTACTED,
         )
+        self.foreign_client = Client.objects.create(
+            first_name="Carlos",
+            last_name="Vega",
+            email="carlos.vega@example.com",
+            company=self.company,
+            owner=self.other_user,
+            status=Client.Status.LEAD,
+        )
+        self.owned_interaction = Interaction.objects.create(
+            client=self.owned_client,
+            created_by=self.owner,
+            interaction_type=Interaction.InteractionType.EMAIL,
+            subject="Correo propio",
+            summary="Resumen propio.",
+        )
+        self.foreign_interaction = Interaction.objects.create(
+            client=self.foreign_client,
+            created_by=self.other_user,
+            interaction_type=Interaction.InteractionType.CALL,
+            subject="Llamada ajena",
+            summary="Resumen ajeno.",
+        )
+        self.login_user()
+
+    def test_client_list_only_shows_clients_owned_by_authenticated_user(self):
+        response = self.client.get(reverse("crm:client_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["clients"]), [self.owned_client])
+        self.assertContains(response, "Lucia")
+        self.assertNotContains(response, "Carlos")
+        self.assertContains(response, "1 cliente disponible")
+
+    def test_user_cannot_access_detail_of_foreign_client(self):
+        response = self.client.get(reverse("crm:client_detail", args=[self.foreign_client.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_cannot_access_update_view_of_foreign_client(self):
+        response = self.client.get(reverse("crm:client_update", args=[self.foreign_client.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_cannot_access_delete_view_of_foreign_client(self):
+        response = self.client.get(reverse("crm:client_delete", args=[self.foreign_client.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_cannot_delete_foreign_client(self):
+        response = self.client.post(reverse("crm:client_delete", args=[self.foreign_client.pk]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Client.objects.filter(pk=self.foreign_client.pk).exists())
+
+    def test_user_cannot_create_activity_for_foreign_client(self):
+        response = self.client.post(
+            reverse("crm:interaction_create", args=[self.foreign_client.pk]),
+            data={
+                "interaction_type": Interaction.InteractionType.NOTE,
+                "subject": "Intento ajeno",
+                "summary": "No debería guardarse.",
+                "next_step": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            Interaction.objects.filter(client=self.foreign_client).count(),
+            1,
+        )
+
+    def test_user_cannot_access_update_view_for_activity_of_foreign_client(self):
+        response = self.client.get(
+            reverse("crm:interaction_update", args=[self.foreign_client.pk, self.foreign_interaction.pk]),
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_cannot_delete_activity_of_foreign_client(self):
+        response = self.client.post(
+            reverse("crm:interaction_delete", args=[self.foreign_client.pk, self.foreign_interaction.pk]),
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(Interaction.objects.filter(pk=self.foreign_interaction.pk).exists())
+
+
+class ClientListPaginationTests(CRMBaseTestCase):
+    def setUp(self):
+        self.owner = self.create_user()
         self.company = Company.objects.create(name="Empresa Demo")
 
         for index in range(7):
@@ -256,6 +489,7 @@ class ClientListPaginationTests(TestCase):
             owner=self.owner,
             status=Client.Status.WON,
         )
+        self.login_user()
 
     def test_client_list_paginates_to_five_items_per_page(self):
         response = self.client.get(reverse("crm:client_list"))
@@ -294,12 +528,9 @@ class ClientListPaginationTests(TestCase):
         self.assertNotContains(response, '5 clientes encontrados para "Filtro"')
 
 
-class InteractionCreateFlowTests(TestCase):
+class InteractionCreateFlowTests(CRMBaseTestCase):
     def setUp(self):
-        self.owner = get_user_model().objects.create_user(
-            username="responsable",
-            password="testpass123",
-        )
+        self.owner = self.create_user()
         self.company = Company.objects.create(name="Empresa Demo")
         self.client_record = Client.objects.create(
             first_name="Lucia",
@@ -311,6 +542,7 @@ class InteractionCreateFlowTests(TestCase):
             owner=self.owner,
             status=Client.Status.CONTACTED,
         )
+        self.login_user()
 
     def test_client_detail_shows_empty_state_and_register_link(self):
         response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
@@ -438,12 +670,9 @@ class InteractionCreateFlowTests(TestCase):
         self.assertContains(response, "?source=demo&amp;activity_page=2")
 
 
-class InteractionUpdateFlowTests(TestCase):
+class InteractionUpdateFlowTests(CRMBaseTestCase):
     def setUp(self):
-        self.owner = get_user_model().objects.create_user(
-            username="responsable",
-            password="testpass123",
-        )
+        self.owner = self.create_user()
         self.company = Company.objects.create(name="Empresa Demo")
         self.client_record = Client.objects.create(
             first_name="Lucia",
@@ -463,6 +692,7 @@ class InteractionUpdateFlowTests(TestCase):
             summary="Resumen inicial de la actividad.",
             next_step="Enviar documentación actualizada.",
         )
+        self.login_user()
 
     def test_client_detail_shows_link_to_update_view_for_each_interaction(self):
         response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
@@ -544,12 +774,9 @@ class InteractionUpdateFlowTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class InteractionDeleteFlowTests(TestCase):
+class InteractionDeleteFlowTests(CRMBaseTestCase):
     def setUp(self):
-        self.owner = get_user_model().objects.create_user(
-            username="responsable",
-            password="testpass123",
-        )
+        self.owner = self.create_user()
         self.company = Company.objects.create(name="Empresa Demo")
         self.client_record = Client.objects.create(
             first_name="Lucia",
@@ -569,6 +796,7 @@ class InteractionDeleteFlowTests(TestCase):
             summary="Resumen inicial de la actividad.",
             next_step="Enviar documentación actualizada.",
         )
+        self.login_user()
 
     def test_client_detail_shows_link_to_delete_view_for_each_interaction(self):
         response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))

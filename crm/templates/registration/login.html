@@ -1,0 +1,75 @@
+{% extends "crm/base_app.html" %}
+
+{% block title %}Iniciar sesión | CRM Básico{% endblock %}
+
+{% block content %}
+    <section class="page-section auth-page content-frame">
+        <div class="auth-shell">
+            <section class="auth-copy" aria-labelledby="login-copy-title">
+                <p class="auth-copy__eyebrow">Acceso privado al CRM</p>
+
+                <div class="auth-copy__body">
+                    <h1 class="auth-copy__title" id="login-copy-title">Sigue cada cliente con más claridad</h1>
+                    <p class="auth-copy__text">Entra para revisar clientes, registrar actividad y mantener el seguimiento comercial desde una interfaz sobria y fácil de explicar.</p>
+                </div>
+
+                <ul class="auth-copy__points" role="list">
+                    <li>Listado claro de clientes, empresa y responsable</li>
+                    <li>Actividad reciente y próximos pasos dentro del mismo detalle</li>
+                    <li>Acceso protegido para trabajar siempre con tu sesión activa</li>
+                </ul>
+
+                <p class="auth-copy__closing">Accede y retoma el trabajo exactamente donde lo dejaste.</p>
+            </section>
+
+            <section class="auth-card auth-card--login" aria-label="Formulario de inicio de sesión">
+                <div class="auth-card__header">
+                    <p class="auth-card__eyebrow">Inicio de sesión</p>
+                    <h2 class="auth-card__title">Iniciar sesión</h2>
+                    <p class="auth-card__text">Usa tu usuario y contraseña para entrar al flujo principal del CRM.</p>
+                </div>
+
+                <form class="auth-form auth-form--login" method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="auth-form-error" role="alert">
+                            No hemos podido iniciar la sesión con esos datos. Revisa el usuario y la contraseña e inténtalo de nuevo.
+                        </div>
+                    {% endif %}
+
+                    <div class="auth-form__group">
+                        <label for="{{ form.username.id_for_label }}">Usuario</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="auth-form-error" role="alert">
+                                {{ form.username.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="auth-form__group">
+                        <label for="{{ form.password.id_for_label }}">Contraseña</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="auth-form-error" role="alert">
+                                {{ form.password.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+
+                    <button class="auth-form__submit" type="submit">Entrar</button>
+                </form>
+
+                <div class="auth-card__footer">
+                    <p class="auth-card__meta">Si todavía no tienes acceso, puedes crear tu cuenta y entrar directamente al CRM.</p>
+                    <a class="auth-card__link" href="{% url 'register' %}">Crear cuenta</a>
+                </div>
+            </section>
+        </div>
+    </section>
+{% endblock %}
