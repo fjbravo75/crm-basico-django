@@ -1,0 +1,55 @@
+{% extends "crm/base_app.html" %}
+
+{% block title %}Eliminar actividad | CRM Básico{% endblock %}
+
+{% block content %}
+    <section class="page-section content-frame">
+        <div>
+            <h1 class="page-title">Eliminar actividad</h1>
+            <p class="page-intro">Confirma si quieres eliminar esta actividad del seguimiento de {{ client.first_name }} {{ client.last_name }}.</p>
+        </div>
+
+        <section class="panel">
+            <div class="panel__body panel__body--stack">
+                <dl class="data-grid">
+                    <div class="data-pair">
+                        <dt class="data-label">Tipo</dt>
+                        <dd class="data-value">
+                            {% if interaction.interaction_type == "call" %}
+                                Llamada
+                            {% elif interaction.interaction_type == "email" %}
+                                Correo
+                            {% elif interaction.interaction_type == "meeting" %}
+                                Reunión
+                            {% elif interaction.interaction_type == "note" %}
+                                Nota
+                            {% elif interaction.interaction_type == "follow_up" %}
+                                Seguimiento
+                            {% else %}
+                                {{ interaction.get_interaction_type_display }}
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Asunto</dt>
+                        <dd class="data-value">{{ interaction.subject }}</dd>
+                    </div>
+                    <div class="data-pair">
+                        <dt class="data-label">Cliente</dt>
+                        <dd class="data-value">{{ client.first_name }} {{ client.last_name }}</dd>
+                    </div>
+                </dl>
+
+                <p class="confirm-warning">Esta acción no se puede deshacer.</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="button-row">
+                        <button class="button button--danger" type="submit">Eliminar actividad</button>
+                        <a class="button button--secondary" href="{% url 'crm:client_detail' client.pk %}">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </section>
+{% endblock %}

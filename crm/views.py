@@ -158,3 +158,54 @@ class InteractionCreateView(CreateView):
 
     def get_success_url(self):
         return reverse("crm:client_detail", kwargs={"pk": self.client.pk})
+
+
+class InteractionUpdateView(UpdateView):
+    model = Interaction
+    form_class = InteractionForm
+    template_name = "crm/interaction_form.html"
+    context_object_name = "interaction"
+
+    def get_queryset(self):
+        return (
+            Interaction.objects.select_related(
+                "client",
+                "client__company",
+                "client__owner",
+                "created_by",
+            )
+            .filter(client_id=self.kwargs["client_pk"])
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["client"] = self.object.client
+        return context
+
+    def get_success_url(self):
+        return reverse("crm:client_detail", kwargs={"pk": self.object.client_id})
+
+
+class InteractionDeleteView(DeleteView):
+    model = Interaction
+    template_name = "crm/interaction_confirm_delete.html"
+    context_object_name = "interaction"
+
+    def get_queryset(self):
+        return (
+            Interaction.objects.select_related(
+                "client",
+                "client__company",
+                "client__owner",
+                "created_by",
+            )
+            .filter(client_id=self.kwargs["client_pk"])
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["client"] = self.object.client
+        return context
+
+    def get_success_url(self):
+        return reverse("crm:client_detail", kwargs={"pk": self.object.client_id})

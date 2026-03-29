@@ -7,6 +7,8 @@ from .views import (
     ClientListView,
     ClientUpdateView,
     InteractionCreateView,
+    InteractionDeleteView,
+    InteractionUpdateView,
 )
 
 app_name = "crm"
@@ -18,4 +20,14 @@ urlpatterns = [
     path("clientes/<int:pk>/editar/", ClientUpdateView.as_view(), name="client_update"),
     path("clientes/<int:pk>/eliminar/", ClientDeleteView.as_view(), name="client_delete"),
     path("clientes/<int:client_pk>/interacciones/nueva/", InteractionCreateView.as_view(), name="interaction_create"),
+    path(
+        "clientes/<int:client_pk>/interacciones/<int:pk>/editar/",
+        InteractionUpdateView.as_view(),
+        name="interaction_update",
+    ),
+    path(
+        "clientes/<int:client_pk>/interacciones/<int:pk>/eliminar/",
+        InteractionDeleteView.as_view(),
+        name="interaction_delete",
+    ),
 ]

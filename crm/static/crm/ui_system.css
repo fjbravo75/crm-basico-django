@@ -712,6 +712,14 @@ select.field--compact {
   color: var(--color-slate-900);
 }
 
+.activity-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
 .activity-card__author {
   margin: 0;
   color: var(--color-slate-500);
@@ -720,6 +728,52 @@ select.field--compact {
 
 .activity-card__author {
   font-size: 0.875rem;
+}
+
+.activity-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.9rem;
+  margin-left: auto;
+}
+
+.activity-card__action {
+  color: var(--color-slate-700);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    color var(--transition-fast),
+    text-decoration-color var(--transition-fast);
+}
+
+.activity-card__action:hover {
+  color: var(--color-slate-900);
+  text-decoration: underline;
+}
+
+.activity-card__action--danger {
+  color: var(--color-rose-700);
+}
+
+.activity-card__action:focus-visible {
+  outline: none;
+  color: var(--color-slate-900);
+  text-decoration: underline;
+}
+
+.activity-card__action--danger:hover,
+.activity-card__action--danger:focus-visible {
+  color: #8f1d16;
+}
+
+.confirm-warning {
+  margin: 0;
+  color: var(--color-rose-700);
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .client-detail-empty-copy {

@@ -436,3 +436,194 @@ class InteractionCreateFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "?source=demo&amp;activity_page=2")
+
+
+class InteractionUpdateFlowTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="responsable",
+            password="testpass123",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.client_record = Client.objects.create(
+            first_name="Lucia",
+            last_name="Martinez",
+            email="lucia.martinez@example.com",
+            phone="+34 600 000 002",
+            position="Directora Comercial",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.CONTACTED,
+        )
+        self.interaction = Interaction.objects.create(
+            client=self.client_record,
+            created_by=self.owner,
+            interaction_type=Interaction.InteractionType.EMAIL,
+            subject="Correo inicial",
+            summary="Resumen inicial de la actividad.",
+            next_step="Enviar documentación actualizada.",
+        )
+
+    def test_client_detail_shows_link_to_update_view_for_each_interaction(self):
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse("crm:interaction_update", args=[self.client_record.pk, self.interaction.pk]),
+        )
+        self.assertContains(response, "Editar actividad")
+
+    def test_update_view_loads_prepopulated_form(self):
+        response = self.client.get(
+            reverse("crm:interaction_update", args=[self.client_record.pk, self.interaction.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Gestor de clientes")
+        self.assertContains(response, "Editar actividad")
+        self.assertContains(response, 'value="Correo inicial"')
+        self.assertContains(response, "Resumen inicial de la actividad.")
+        self.assertContains(response, "Enviar documentación actualizada.")
+
+    def test_update_view_saves_changes_and_redirects_to_client_detail(self):
+        response = self.client.post(
+            reverse("crm:interaction_update", args=[self.client_record.pk, self.interaction.pk]),
+            data={
+                "interaction_type": Interaction.InteractionType.MEETING,
+                "subject": "Reunión de seguimiento",
+                "summary": "Se revisaron cambios sobre la propuesta comercial.",
+                "next_step": "Preparar versión final para validación.",
+            },
+        )
+
+        self.assertRedirects(response, reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.interaction.refresh_from_db()
+        self.assertEqual(self.interaction.interaction_type, Interaction.InteractionType.MEETING)
+        self.assertEqual(self.interaction.subject, "Reunión de seguimiento")
+        self.assertEqual(self.interaction.summary, "Se revisaron cambios sobre la propuesta comercial.")
+        self.assertEqual(self.interaction.next_step, "Preparar versión final para validación.")
+        self.assertEqual(self.interaction.client, self.client_record)
+        self.assertEqual(self.interaction.created_by, self.owner)
+
+    def test_update_view_rerenders_form_with_errors(self):
+        response = self.client.post(
+            reverse("crm:interaction_update", args=[self.client_record.pk, self.interaction.pk]),
+            data={
+                "interaction_type": Interaction.InteractionType.NOTE,
+                "subject": "",
+                "summary": "",
+                "next_step": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["form"].errors)
+        self.assertContains(response, "Gestor de clientes")
+        self.assertContains(response, "Editar actividad")
+        self.assertContains(response, "Guardar cambios")
+
+        self.interaction.refresh_from_db()
+        self.assertEqual(self.interaction.subject, "Correo inicial")
+        self.assertEqual(self.interaction.summary, "Resumen inicial de la actividad.")
+
+    def test_update_view_only_accepts_interactions_for_the_given_client(self):
+        other_client = Client.objects.create(
+            first_name="Carlos",
+            last_name="Vega",
+            email="carlos.vega@example.com",
+            owner=self.owner,
+            status=Client.Status.LEAD,
+        )
+
+        response = self.client.get(
+            reverse("crm:interaction_update", args=[other_client.pk, self.interaction.pk]),
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+
+class InteractionDeleteFlowTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="responsable",
+            password="testpass123",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.client_record = Client.objects.create(
+            first_name="Lucia",
+            last_name="Martinez",
+            email="lucia.martinez@example.com",
+            phone="+34 600 000 002",
+            position="Directora Comercial",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.CONTACTED,
+        )
+        self.interaction = Interaction.objects.create(
+            client=self.client_record,
+            created_by=self.owner,
+            interaction_type=Interaction.InteractionType.EMAIL,
+            subject="Correo inicial",
+            summary="Resumen inicial de la actividad.",
+            next_step="Enviar documentación actualizada.",
+        )
+
+    def test_client_detail_shows_link_to_delete_view_for_each_interaction(self):
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse("crm:interaction_delete", args=[self.client_record.pk, self.interaction.pk]),
+        )
+        self.assertContains(response, "Eliminar actividad")
+
+    def test_delete_confirmation_view_shows_interaction_and_cancel_link(self):
+        response = self.client.get(
+            reverse("crm:interaction_delete", args=[self.client_record.pk, self.interaction.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Eliminar actividad")
+        self.assertContains(response, "Correo inicial")
+        self.assertContains(response, "Lucia Martinez")
+        self.assertContains(response, reverse("crm:client_detail", args=[self.client_record.pk]))
+        self.assertTrue(Interaction.objects.filter(pk=self.interaction.pk).exists())
+
+    def test_delete_confirmation_cancel_keeps_interaction_and_returns_to_detail(self):
+        delete_url = reverse("crm:interaction_delete", args=[self.client_record.pk, self.interaction.pk])
+        detail_url = reverse("crm:client_detail", args=[self.client_record.pk])
+
+        response = self.client.get(delete_url)
+        self.assertContains(response, detail_url)
+
+        cancel_response = self.client.get(detail_url)
+        self.assertEqual(cancel_response.status_code, 200)
+        self.assertTrue(Interaction.objects.filter(pk=self.interaction.pk).exists())
+        self.assertContains(cancel_response, "Correo inicial")
+
+    def test_delete_view_removes_interaction_and_redirects_to_client_detail(self):
+        response = self.client.post(
+            reverse("crm:interaction_delete", args=[self.client_record.pk, self.interaction.pk]),
+        )
+
+        self.assertRedirects(response, reverse("crm:client_detail", args=[self.client_record.pk]))
+        self.assertFalse(Interaction.objects.filter(pk=self.interaction.pk).exists())
+        self.assertTrue(Client.objects.filter(pk=self.client_record.pk).exists())
+
+    def test_delete_view_only_accepts_interactions_for_the_given_client(self):
+        other_client = Client.objects.create(
+            first_name="Carlos",
+            last_name="Vega",
+            email="carlos.vega@example.com",
+            owner=self.owner,
+            status=Client.Status.LEAD,
+        )
+
+        response = self.client.get(
+            reverse("crm:interaction_delete", args=[other_client.pk, self.interaction.pk]),
+        )
+
+        self.assertEqual(response.status_code, 404)

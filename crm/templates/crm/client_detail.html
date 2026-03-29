@@ -137,7 +137,13 @@
                                     {% if interaction.next_step %}
                                         <p class="activity-card__next-step"><strong>Próximo paso:</strong> {{ interaction.next_step }}</p>
                                     {% endif %}
-                                    <p class="activity-card__author">Registrada por {{ interaction.created_by.get_username }}</p>
+                                    <div class="activity-card__footer">
+                                        <p class="activity-card__author">Registrada por {{ interaction.created_by.get_username }}</p>
+                                        <div class="activity-card__actions" aria-label="Acciones de la actividad">
+                                            <a class="activity-card__action" href="{% url 'crm:interaction_update' client.pk interaction.pk %}">Editar actividad</a>
+                                            <a class="activity-card__action activity-card__action--danger" href="{% url 'crm:interaction_delete' client.pk interaction.pk %}">Eliminar actividad</a>
+                                        </div>
+                                    </div>
                                 </div>
                             </li>
                         {% endfor %}
