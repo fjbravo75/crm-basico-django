@@ -34,6 +34,9 @@ INTERACTION_TYPE_CHOICES_ES = [
 
 
 class RegisterForm(UserCreationForm):
+    first_name = forms.CharField(max_length=150, required=True)
+    last_name = forms.CharField(max_length=150, required=True)
+
     error_messages = {
         **UserCreationForm.error_messages,
         "password_mismatch": "Las contraseñas no coinciden. Revisa ambos campos y vuelve a intentarlo.",
@@ -41,25 +44,24 @@ class RegisterForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = get_user_model()
-        fields = ["username", "password1", "password2"]
+        fields = ["first_name", "last_name", "username", "password1", "password2"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["first_name"].label = "Nombre"
+        self.fields["last_name"].label = "Apellidos"
         self.fields["username"].label = "Usuario"
         self.fields["password1"].label = "Contraseña"
         self.fields["password2"].label = "Confirmar contraseña"
-        self.fields["username"].help_text = "Hasta 150 caracteres. Puedes usar letras, números y @/./+/-/_."
-        self.fields["password1"].help_text = (
-            "<ul>"
-            "<li>Debe tener al menos 8 caracteres.</li>"
-            "<li>No puede parecerse demasiado a tu usuario.</li>"
-            "<li>No puede ser una clave demasiado común.</li>"
-            "<li>No puede estar formada solo por números.</li>"
-            "</ul>"
-        )
-        self.fields["password2"].help_text = "Repite la misma contraseña para confirmar el acceso."
+        self.fields["username"].max_length = 30
+        self.fields["username"].widget.attrs["maxlength"] = 30
+        self.fields["username"].help_text = "Lo usarás para entrar. Mejor si es corto y fácil de recordar."
+        self.fields["password1"].help_text = "Usa una contraseña de al menos 8 caracteres y evita las demasiado simples."
+        self.fields["password2"].help_text = "Repítela para confirmar el acceso."
+        self.fields["first_name"].error_messages["required"] = "Escribe tu nombre para crear la cuenta."
+        self.fields["last_name"].error_messages["required"] = "Escribe tus apellidos para crear la cuenta."
         self.fields["username"].error_messages["required"] = "Escribe un nombre de usuario para crear la cuenta."
-        self.fields["username"].error_messages["max_length"] = "El nombre de usuario no puede superar los 150 caracteres."
+        self.fields["username"].error_messages["max_length"] = "El usuario no puede superar los 30 caracteres."
         self.fields["password1"].error_messages["required"] = "Escribe una contraseña para continuar."
         self.fields["password2"].error_messages["required"] = "Confirma la contraseña para continuar."
 
@@ -69,6 +71,8 @@ class RegisterForm(UserCreationForm):
 
     def clean_username(self):
         username = self.cleaned_data.get("username")
+        if username and len(username) > 30:
+            raise forms.ValidationError("El usuario no puede superar los 30 caracteres.")
         if username and self._meta.model.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError("Ya existe una cuenta con ese nombre de usuario. Prueba con otro.")
         return username
@@ -76,6 +80,14 @@ class RegisterForm(UserCreationForm):
     def validate_password_for_user(self, user, password_field_name="password2"):
         with override("es"):
             super().validate_password_for_user(user, password_field_name=password_field_name)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
+        if commit:
+            user.save()
+        return user
 
 
 class ClientForm(forms.ModelForm):

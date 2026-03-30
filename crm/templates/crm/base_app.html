@@ -16,7 +16,7 @@
             {% if user.is_authenticated or current_url_name != "login" and current_url_name != "register" %}
                 <nav class="app-nav" aria-label="Acciones globales">
                     {% if user.is_authenticated %}
-                        <span class="app-nav__session">Sesión iniciada como {{ user.get_username }}</span>
+                        <span class="app-nav__session">Sesión iniciada como {% firstof user.get_full_name user.get_username %}</span>
                         <form class="app-nav__form" method="post" action="{% url 'logout' %}">
                             {% csrf_token %}
                             <button class="button button--secondary button--compact" type="submit">Cerrar sesión</button>

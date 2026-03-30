@@ -1,35 +1,35 @@
 {% extends "crm/base_app.html" %}
 
-{% block title %}Crear cuenta | CRM Básico{% endblock %}
+{% block title %}Crear cuenta | Gestor de clientes{% endblock %}
 
 {% block content %}
     <section class="page-section auth-page content-frame">
         <div class="auth-shell">
             <section class="auth-copy" aria-labelledby="register-copy-title">
-                <p class="auth-copy__eyebrow">Alta básica de acceso</p>
+                <p class="auth-copy__eyebrow">Crea tu cuenta</p>
 
                 <div class="auth-copy__body">
                     <h1 class="auth-copy__title" id="register-copy-title">Crea tu acceso y empieza a trabajar</h1>
-                    <p class="auth-copy__text">Abre una cuenta personal para entrar al CRM, gestionar tus propios clientes y registrar la actividad comercial desde tu sesión.</p>
+                    <p class="auth-copy__text">Crea tu cuenta para empezar a organizar tus clientes y llevar el seguimiento comercial en un solo lugar.</p>
                 </div>
 
                 <ul class="auth-copy__points" role="list">
-                    <li>Usuario y contraseña con el sistema estándar de Django</li>
-                    <li>Clientes y actividad ligados a tu propia sesión desde el primer acceso</li>
-                    <li>Alta simple para empezar a trabajar sin configuración adicional</li>
+                    <li>Tu nombre aparecerá como responsable dentro de la aplicación</li>
+                    <li>Tendrás tu propio acceso para entrar siempre que lo necesites</li>
+                    <li>Tus clientes y su actividad quedarán ligados a tu cuenta desde el primer momento</li>
                 </ul>
 
-                <p class="auth-copy__closing">Crea la cuenta y entra directamente al flujo principal del CRM.</p>
+                <p class="auth-copy__closing">Crea la cuenta y empieza a trabajar en Gestor de clientes.</p>
             </section>
 
             <section class="auth-card auth-card--register" aria-label="Formulario de registro">
                 <div class="auth-card__header">
                     <p class="auth-card__eyebrow">Nuevo acceso</p>
                     <h2 class="auth-card__title">Crear cuenta</h2>
-                    <p class="auth-card__text">Completa un usuario y una contraseña para empezar a usar la aplicación con tu propia sesión.</p>
+                    <p class="auth-card__text">Completa tus datos y crea tu acceso para empezar a trabajar con tu propia cuenta.</p>
                 </div>
 
-                <form class="auth-form" method="post" novalidate>
+                <form class="auth-form auth-form--register" method="post" novalidate>
                     {% csrf_token %}
 
                     {% if form.non_field_errors %}
@@ -37,6 +37,26 @@
                             {{ form.non_field_errors }}
                         </div>
                     {% endif %}
+
+                    <div class="auth-form__group">
+                        <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="auth-form-error" role="alert">
+                                {{ form.first_name.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="auth-form__group">
+                        <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="auth-form-error" role="alert">
+                                {{ form.last_name.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
 
                     <div class="auth-form__group">
                         <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
@@ -81,7 +101,7 @@
                 </form>
 
                 <div class="auth-card__footer">
-                    <p class="auth-card__meta">Si ya tienes cuenta, vuelve al acceso y entra con tu sesión.</p>
+                    <p class="auth-card__meta">Si ya tienes cuenta, vuelve al acceso e inicia sesión.</p>
                     <a class="auth-card__link" href="{% url 'login' %}">Volver al login</a>
                 </div>
             </section>

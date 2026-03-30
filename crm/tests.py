@@ -1,17 +1,23 @@
+from io import StringIO
+
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from .management.commands.seed_demo_crm import COMPANIES, CLIENTS, DEMO_PASSWORD, DEMO_USER, INTERACTIONS
 from .models import Client, Company, Interaction
 
 
 class CRMBaseTestCase(TestCase):
     password = "testpass123"
 
-    def create_user(self, username="responsable"):
+    def create_user(self, username="responsable", first_name="", last_name=""):
         return get_user_model().objects.create_user(
             username=username,
+            first_name=first_name,
+            last_name=last_name,
             password=self.password,
         )
 
@@ -32,8 +38,11 @@ class AuthenticationAccessTests(CRMBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Iniciar sesión")
+        self.assertContains(response, "Acceso de demostración")
         self.assertContains(response, "Usuario")
         self.assertContains(response, "Contraseña")
+        self.assertContains(response, DEMO_USER["username"])
+        self.assertContains(response, DEMO_PASSWORD)
         self.assertContains(response, reverse("register"))
 
     def test_anonymous_user_is_redirected_to_login_from_client_list(self):
@@ -93,6 +102,87 @@ class AuthenticationAccessTests(CRMBaseTestCase):
         self.assert_login_redirect(protected_response, reverse("crm:client_list"))
 
 
+class DemoSeedCommandTests(CRMBaseTestCase):
+    def run_seed(self):
+        stdout = StringIO()
+        call_command("seed_demo_crm", stdout=stdout)
+        return stdout.getvalue()
+
+    def test_seed_creates_demo_user_with_known_credentials_and_accessible_data(self):
+        output = self.run_seed()
+        demo_user = get_user_model().objects.get(username=DEMO_USER["username"])
+        owned_clients = list(Client.objects.filter(owner=demo_user).order_by("last_name", "first_name"))
+        first_client = owned_clients[0]
+
+        self.assertTrue(demo_user.has_usable_password())
+        self.assertTrue(demo_user.check_password(DEMO_PASSWORD))
+        self.assertEqual(demo_user.get_full_name(), "María Ortega")
+        self.assertEqual(Company.objects.count(), len(COMPANIES))
+        self.assertEqual(Client.objects.filter(owner=demo_user).count(), len(CLIENTS))
+        self.assertEqual(Interaction.objects.filter(created_by=demo_user).count(), len(INTERACTIONS))
+        self.assertEqual(len(owned_clients), len(CLIENTS))
+        self.assertTrue(all(client.interactions.exists() for client in owned_clients))
+        self.assertEqual(first_client.email, "ana.beltran@costaretail.example")
+        self.assertGreaterEqual(first_client.interactions.count(), 5)
+        self.assertIn(DEMO_USER["username"], output)
+        self.assertIn(DEMO_PASSWORD, output)
+        self.assertIn("/acceso/login/", output)
+
+        login_response = self.client.post(
+            reverse("login"),
+            data={
+                "username": DEMO_USER["username"],
+                "password": DEMO_PASSWORD,
+            },
+        )
+
+        self.assertRedirects(login_response, reverse("crm:client_list"))
+
+        list_response = self.client.get(reverse("crm:client_list"))
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, demo_user.get_full_name())
+        self.assertNotContains(list_response, demo_user.get_username())
+        self.assertContains(list_response, "Diego")
+
+    def test_seed_repairs_existing_demo_user_with_unusable_password_and_keeps_counts_stable(self):
+        demo_user = get_user_model().objects.create_user(
+            username=DEMO_USER["username"],
+            email=DEMO_USER["email"],
+            first_name=DEMO_USER["first_name"],
+            last_name=DEMO_USER["last_name"],
+            password="temporal-invalida-123",
+        )
+        demo_user.set_unusable_password()
+        demo_user.save(update_fields=["password"])
+
+        self.run_seed()
+        demo_user.refresh_from_db()
+
+        self.assertTrue(demo_user.has_usable_password())
+        self.assertTrue(demo_user.check_password(DEMO_PASSWORD))
+        self.assertEqual(Company.objects.count(), len(COMPANIES))
+        self.assertEqual(Client.objects.count(), len(CLIENTS))
+        self.assertEqual(Interaction.objects.count(), len(INTERACTIONS))
+
+        stray_client = Client.objects.get(email="ana.beltran@costaretail.example")
+        Interaction.objects.create(
+            client=stray_client,
+            created_by=demo_user,
+            interaction_type=Interaction.InteractionType.NOTE,
+            subject="Actividad temporal fuera del seed",
+            summary="Esta actividad extra debe desaparecer al resembrar la demo.",
+        )
+        self.assertEqual(Interaction.objects.count(), len(INTERACTIONS) + 1)
+
+        second_output = self.run_seed()
+
+        self.assertEqual(Company.objects.count(), len(COMPANIES))
+        self.assertEqual(Client.objects.count(), len(CLIENTS))
+        self.assertEqual(Interaction.objects.count(), len(INTERACTIONS))
+        self.assertIn("reutilizado", second_output)
+        self.assertIn(DEMO_PASSWORD, second_output)
+
+
 class RegistrationFlowTests(CRMBaseTestCase):
     registration_password = "ClaveTemporal123"
 
@@ -102,13 +192,17 @@ class RegistrationFlowTests(CRMBaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "registration/register.html")
         self.assertContains(response, "Crear cuenta")
-        self.assertContains(response, "Crea tu acceso")
+        self.assertContains(response, "Crea tu cuenta")
+        self.assertContains(response, "Nombre")
+        self.assertContains(response, "Apellidos")
         self.assertContains(response, reverse("login"))
 
     def test_register_valid_post_creates_user_logs_them_in_and_redirects(self):
         response = self.client.post(
             reverse("register"),
             data={
+                "first_name": "Laura",
+                "last_name": "Serrano",
                 "username": "nuevo-comercial",
                 "password1": self.registration_password,
                 "password2": self.registration_password,
@@ -118,17 +212,40 @@ class RegistrationFlowTests(CRMBaseTestCase):
         self.assertRedirects(response, reverse("crm:client_list"))
 
         user = get_user_model().objects.get(username="nuevo-comercial")
+        self.assertEqual(user.first_name, "Laura")
+        self.assertEqual(user.last_name, "Serrano")
         self.assertEqual(str(user.pk), self.client.session.get("_auth_user_id"))
 
         list_response = self.client.get(reverse("crm:client_list"))
         self.assertEqual(list_response.status_code, 200)
-        self.assertContains(list_response, user.get_username())
+        self.assertContains(list_response, user.get_full_name())
         self.assertContains(list_response, "Cerrar sesión")
+
+    def test_register_requires_first_name_and_last_name(self):
+        response = self.client.post(
+            reverse("register"),
+            data={
+                "first_name": "",
+                "last_name": "",
+                "username": "nuevo-comercial",
+                "password1": self.registration_password,
+                "password2": self.registration_password,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "registration/register.html")
+        self.assertTrue(response.context["form"].errors)
+        self.assertContains(response, "Escribe tu nombre para crear la cuenta.")
+        self.assertContains(response, "Escribe tus apellidos para crear la cuenta.")
+        self.assertFalse(get_user_model().objects.filter(username="nuevo-comercial").exists())
 
     def test_register_invalid_post_shows_errors_and_does_not_create_user(self):
         response = self.client.post(
             reverse("register"),
             data={
+                "first_name": "Laura",
+                "last_name": "Serrano",
                 "username": "nuevo-comercial",
                 "password1": self.registration_password,
                 "password2": "otra-clave-123",
@@ -140,6 +257,24 @@ class RegistrationFlowTests(CRMBaseTestCase):
         self.assertTrue(response.context["form"].errors)
         self.assertContains(response, "Las contraseñas no coinciden")
         self.assertFalse(get_user_model().objects.filter(username="nuevo-comercial").exists())
+
+    def test_register_rejects_username_longer_than_thirty_characters(self):
+        response = self.client.post(
+            reverse("register"),
+            data={
+                "first_name": "Laura",
+                "last_name": "Serrano",
+                "username": "usuario-demo-demasiado-largo-31",
+                "password1": self.registration_password,
+                "password2": self.registration_password,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "registration/register.html")
+        self.assertTrue(response.context["form"].errors)
+        self.assertContains(response, "El usuario no puede superar los 30 caracteres.")
+        self.assertFalse(get_user_model().objects.filter(username="usuario-demo-demasiado-largo-31").exists())
 
     def test_authenticated_user_is_redirected_from_register_to_client_list(self):
         self.owner = self.create_user()
@@ -225,6 +360,48 @@ class ClientDetailFlowTests(CRMBaseTestCase):
         self.assertContains(response, "Directora Comercial")
         self.assertContains(response, "Contactado")
         self.assertContains(response, self.owner.get_username())
+
+
+class HumanDisplayTests(CRMBaseTestCase):
+    def setUp(self):
+        self.owner = self.create_user(
+            username="maria.ortega",
+            first_name="María",
+            last_name="Ortega",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.client_record = Client.objects.create(
+            first_name="Ana",
+            last_name="Torres",
+            email="ana.torres@example.com",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.CONTACTED,
+        )
+        self.interaction = Interaction.objects.create(
+            client=self.client_record,
+            created_by=self.owner,
+            interaction_type=Interaction.InteractionType.EMAIL,
+            subject="Correo demo",
+            summary="Actividad registrada para validar nombre visible.",
+        )
+        self.login_user()
+
+    def test_client_list_shows_human_name_in_header_and_responsible_field(self):
+        response = self.client.get(reverse("crm:client_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Sesión iniciada como María Ortega")
+        self.assertContains(response, "María Ortega")
+        self.assertNotContains(response, self.owner.username)
+
+    def test_client_detail_shows_human_name_for_owner_and_activity_author(self):
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "María Ortega")
+        self.assertContains(response, "Registrada por María Ortega")
+        self.assertNotContains(response, self.owner.username)
 
 
 class ClientUpdateFlowTests(CRMBaseTestCase):

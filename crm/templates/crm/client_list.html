@@ -96,7 +96,7 @@
                                 </div>
                                 <div class="data-pair">
                                     <dt class="data-label">Responsable</dt>
-                                    <dd class="data-value">{{ client.owner.get_username }}</dd>
+                                    <dd class="data-value">{% firstof client.owner.get_full_name client.owner.get_username %}</dd>
                                 </div>
                             </dl>
                         </div>

@@ -23,3 +23,11 @@ Construir una aplicación CRM pequeña pero sólida, con:
 - Django
 - SQLite (desarrollo)
 - Git y GitHub
+
+## Demo local rápida
+
+- Ejecuta `python manage.py migrate`
+- Ejecuta `python manage.py seed_demo_crm`
+- Arranca el servidor con `python manage.py runserver`
+- Entra en `http://127.0.0.1:8000/acceso/login/`
+- Usa el usuario `maria.ortega` y la contraseña `DemoCRM123!`

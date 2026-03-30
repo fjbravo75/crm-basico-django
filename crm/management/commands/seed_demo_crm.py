@@ -11,9 +11,10 @@ from crm.models import Client, Company, Interaction
 DEMO_USER = {
     "username": "maria.ortega",
     "email": "maria.ortega@demo-crm.example",
-    "first_name": "Maria",
+    "first_name": "María",
     "last_name": "Ortega",
 }
+DEMO_PASSWORD = "DemoCRM123!"
 
 COMPANIES = [
     {
@@ -261,6 +262,50 @@ INTERACTIONS = [
         ),
         "next_step": "Preparar guion comercial para la primera llamada de diagnostico.",
     },
+    # Primer cliente visible del listado con historial suficiente para una demo rapida.
+    {
+        "client_email": "ana.beltran@costaretail.example",
+        "interaction_type": Interaction.InteractionType.MEETING,
+        "interaction_date": "2026-03-20T10:00:00",
+        "subject": "Revision de leads activos de campanas recientes",
+        "summary": (
+            "Ana compartio como gestionan hoy los leads procedentes de redes y acciones promocionales.\n\n"
+            "Se vio valor en tener historial y proximos pasos visibles sin salir del detalle del cliente."
+        ),
+        "next_step": "Preparar un recorrido de demo centrado en seguimiento de leads digitales.",
+    },
+    {
+        "client_email": "ana.beltran@costaretail.example",
+        "interaction_type": Interaction.InteractionType.EMAIL,
+        "interaction_date": "2026-03-18T17:20:00",
+        "subject": "Correo con propuesta resumida para marketing",
+        "summary": "Se envio una propuesta breve enfocada en ordenar contactos, actividad y responsables visibles.",
+        "next_step": "Resolver dudas del equipo sobre la carga inicial de datos.",
+    },
+    {
+        "client_email": "ana.beltran@costaretail.example",
+        "interaction_type": Interaction.InteractionType.CALL,
+        "interaction_date": "2026-03-13T12:30:00",
+        "subject": "Llamada sobre seguimiento de leads digitales",
+        "summary": "Se reviso la necesidad de no perder contexto entre primera respuesta, seguimiento y cierre comercial.",
+        "next_step": "Recoger dos ejemplos reales para la demo guiada.",
+    },
+    {
+        "client_email": "ana.beltran@costaretail.example",
+        "interaction_type": Interaction.InteractionType.NOTE,
+        "interaction_date": "2026-03-10T09:10:00",
+        "subject": "Nota interna sobre volumen irregular de captacion",
+        "summary": "El volumen de leads cambia mucho segun la campana y complica priorizar bien cada oportunidad.",
+        "next_step": "",
+    },
+    {
+        "client_email": "ana.beltran@costaretail.example",
+        "interaction_type": Interaction.InteractionType.FOLLOW_UP,
+        "interaction_date": "2026-03-04T16:05:00",
+        "subject": "Seguimiento tras compartir el enfoque inicial",
+        "summary": "Se confirmo interes en una herramienta sobria, sin complejidad extra y util para equipo pequeno.",
+        "next_step": "Retomar con una demo corta al inicio de la semana siguiente.",
+    },
     # Segundo cliente demo con volumen suficiente para una paginacion corta.
     {
         "client_email": "lucia.romero@nexoindustrial.example",
@@ -307,12 +352,28 @@ INTERACTIONS = [
         "next_step": "Enviar propuesta revisada con alcance reducido.",
     },
     {
+        "client_email": "marta.gil@auroratech.example",
+        "interaction_type": Interaction.InteractionType.EMAIL,
+        "interaction_date": "2026-03-08T12:15:00",
+        "subject": "Correo con cambios de alcance solicitados",
+        "summary": "Se enviaron alternativas mas simples para facilitar una aprobacion interna rapida.",
+        "next_step": "Confirmar si la propuesta revisada pasa a validacion final.",
+    },
+    {
         "client_email": "elena.navarro@costaretail.example",
         "interaction_type": Interaction.InteractionType.EMAIL,
         "interaction_date": "2026-03-07T16:00:00",
         "subject": "Envio de propuesta inicial",
         "summary": "Se compartio un resumen del flujo de trabajo y casos de uso para expansion comercial.",
         "next_step": "Confirmar si el equipo quiere una demo con dos responsables de tienda.",
+    },
+    {
+        "client_email": "elena.navarro@costaretail.example",
+        "interaction_type": Interaction.InteractionType.CALL,
+        "interaction_date": "2026-03-12T11:10:00",
+        "subject": "Llamada sobre nuevas aperturas y seguimiento",
+        "summary": "Se reviso como registrar contactos de nuevos locales sin perder decisiones ni proximos pasos.",
+        "next_step": "Compartir un ejemplo de seguimiento semanal por apertura.",
     },
     {
         "client_email": "ines.campos@nexoindustrial.example",
@@ -322,6 +383,62 @@ INTERACTIONS = [
         "summary": "La directora financiera confirmo que el presupuesto encaja en el trimestre actual.",
         "next_step": "Coordinar arranque y recopilacion de requisitos iniciales.",
     },
+    {
+        "client_email": "ines.campos@nexoindustrial.example",
+        "interaction_type": Interaction.InteractionType.EMAIL,
+        "interaction_date": "2026-03-10T13:10:00",
+        "subject": "Correo con resumen ejecutivo para direccion",
+        "summary": "Se compartio un resumen breve con coste, alcance y valor esperado para facilitar la aprobacion interna.",
+        "next_step": "Resolver comentarios financieros antes del cierre.",
+    },
+    {
+        "client_email": "laura.suarez@auroratech.example",
+        "interaction_type": Interaction.InteractionType.EMAIL,
+        "interaction_date": "2026-03-06T10:25:00",
+        "subject": "Correo inicial sobre visibilidad del pipeline",
+        "summary": "Laura pidio una forma simple de seguir oportunidades activas sin depender de notas dispersas.",
+        "next_step": "Preparar un ejemplo con responsables y estados visibles.",
+    },
+    {
+        "client_email": "pablo.rios@auroratech.example",
+        "interaction_type": Interaction.InteractionType.MEETING,
+        "interaction_date": "2026-03-21T09:45:00",
+        "subject": "Reunion de cierre y adopcion inicial",
+        "summary": "Se repaso el valor esperado para direccion y una implantacion ligera orientada al flujo comercial principal.",
+        "next_step": "Coordinar el arranque con un responsable operativo.",
+    },
+    {
+        "client_email": "sergio.pena@costaretail.example",
+        "interaction_type": Interaction.InteractionType.CALL,
+        "interaction_date": "2026-03-13T17:30:00",
+        "subject": "Llamada comparativa entre opciones",
+        "summary": "Sergio comparo varias herramientas y valoro especialmente la simplicidad de uso para el equipo comercial.",
+        "next_step": "Enviar una demo resumida centrada en seguimiento diario.",
+    },
+    {
+        "client_email": "victor.lara@costaretail.example",
+        "interaction_type": Interaction.InteractionType.NOTE,
+        "interaction_date": "2026-03-02T09:20:00",
+        "subject": "Nota sobre parada temporal del proyecto",
+        "summary": "La oportunidad quedo pausada por presupuesto, pero se mantuvo el contexto para una posible reactivacion.",
+        "next_step": "Revisar de nuevo al inicio del siguiente trimestre.",
+    },
+    {
+        "client_email": "javier.torres@nexoindustrial.example",
+        "interaction_type": Interaction.InteractionType.EMAIL,
+        "interaction_date": "2026-03-16T08:50:00",
+        "subject": "Correo con propuesta de prueba guiada",
+        "summary": "Se compartio una propuesta centrada en trazabilidad comercial y seguimiento ordenado para equipos pequenos.",
+        "next_step": "Confirmar disponibilidad para una demo con dos responsables.",
+    },
+    {
+        "client_email": "carlos.vega@nexoindustrial.example",
+        "interaction_type": Interaction.InteractionType.CALL,
+        "interaction_date": "2026-03-07T12:40:00",
+        "subject": "Llamada sobre seguimiento tras ferias",
+        "summary": "Carlos explico la dificultad de mantener visibles los contactos captados en eventos y su seguimiento posterior.",
+        "next_step": "Preparar ejemplo con origen, estado y proximos pasos.",
+    },
 ]
 
 
@@ -330,7 +447,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with transaction.atomic():
-            owner, owner_created = self._get_or_create_owner()
+            owner, owner_created, password_ready = self._get_or_create_owner()
             companies, company_counts = self._seed_companies()
             clients, client_counts = self._seed_clients(owner, companies)
             interaction_counts = self._seed_interactions(owner, clients)
@@ -339,6 +456,14 @@ class Command(BaseCommand):
         self.stdout.write(
             f"Responsable demo: {'creado' if owner_created else 'reutilizado'} ({owner.username})"
         )
+        self.stdout.write(
+            "Acceso demo: "
+            f"usuario {owner.username} | "
+            f"contrasena {DEMO_PASSWORD} | "
+            "ruta /acceso/login/"
+        )
+        if password_ready:
+            self.stdout.write("La credencial demo ha quedado lista para iniciar sesion.")
         self.stdout.write(
             f"Empresas: {company_counts['created']} creadas, {company_counts['reused']} reutilizadas"
         )
@@ -362,10 +487,28 @@ class Command(BaseCommand):
                 "is_active": True,
             },
         )
-        if created:
-            owner.set_unusable_password()
-            owner.save(update_fields=["password"])
-        return owner, created
+        updated_fields = []
+
+        if owner.email != DEMO_USER["email"]:
+            owner.email = DEMO_USER["email"]
+            updated_fields.append("email")
+        if owner.first_name != DEMO_USER["first_name"]:
+            owner.first_name = DEMO_USER["first_name"]
+            updated_fields.append("first_name")
+        if owner.last_name != DEMO_USER["last_name"]:
+            owner.last_name = DEMO_USER["last_name"]
+            updated_fields.append("last_name")
+        if not owner.is_active:
+            owner.is_active = True
+            updated_fields.append("is_active")
+        if not owner.check_password(DEMO_PASSWORD):
+            owner.set_password(DEMO_PASSWORD)
+            updated_fields.append("password")
+
+        if updated_fields:
+            owner.save(update_fields=updated_fields)
+
+        return owner, created, owner.check_password(DEMO_PASSWORD)
 
     def _seed_companies(self):
         companies = {}
@@ -414,7 +557,7 @@ class Command(BaseCommand):
 
     def _seed_interactions(self, owner, clients):
         counts = {"created": 0, "reused": 0}
-        seeded_ids_by_client = {}
+        seeded_ids_by_client = {client_email: set() for client_email in clients}
 
         for item in INTERACTIONS:
             interaction_date = timezone.make_aware(

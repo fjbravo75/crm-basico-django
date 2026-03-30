@@ -85,7 +85,7 @@
                     </div>
                     <div class="data-pair">
                         <dt class="data-label">Responsable</dt>
-                        <dd class="data-value">{{ client.owner.get_username }}</dd>
+                        <dd class="data-value">{% firstof client.owner.get_full_name client.owner.get_username %}</dd>
                     </div>
                     <div class="data-pair">
                         <dt class="data-label">Fecha de creación</dt>
@@ -138,7 +138,7 @@
                                         <p class="activity-card__next-step"><strong>Próximo paso:</strong> {{ interaction.next_step }}</p>
                                     {% endif %}
                                     <div class="activity-card__footer">
-                                        <p class="activity-card__author">Registrada por {{ interaction.created_by.get_username }}</p>
+                                        <p class="activity-card__author">Registrada por {% firstof interaction.created_by.get_full_name interaction.created_by.get_username %}</p>
                                         <div class="activity-card__actions" aria-label="Acciones de la actividad">
                                             <a class="activity-card__action" href="{% url 'crm:interaction_update' client.pk interaction.pk %}">Editar actividad</a>
                                             <a class="activity-card__action activity-card__action--danger" href="{% url 'crm:interaction_delete' client.pk interaction.pk %}">Eliminar actividad</a>
