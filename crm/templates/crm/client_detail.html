@@ -21,7 +21,7 @@
                 <div class="badge-row">
                     <span class="badge">
                         {% if client.status == "lead" %}
-                            Prospecto
+                            Inicial
                         {% elif client.status == "contacted" %}
                             Contactado
                         {% elif client.status == "follow_up" %}
@@ -67,7 +67,7 @@
                         <dt class="data-label">Estado</dt>
                         <dd class="data-value">
                             {% if client.status == "lead" %}
-                                Prospecto
+                                Inicial
                             {% elif client.status == "contacted" %}
                                 Contactado
                             {% elif client.status == "follow_up" %}
@@ -84,6 +84,24 @@
                         </dd>
                     </div>
                     <div class="data-pair">
+                        <dt class="data-label">Origen</dt>
+                        <dd class="data-value">
+                            {% if client.source == "website" %}
+                                Web
+                            {% elif client.source == "referral" %}
+                                Referencia
+                            {% elif client.source == "social_media" %}
+                                Redes sociales
+                            {% elif client.source == "email_campaign" %}
+                                Campaña de correo
+                            {% elif client.source == "other" %}
+                                Otro
+                            {% else %}
+                                Sin especificar
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div class="data-pair">
                         <dt class="data-label">Responsable</dt>
                         <dd class="data-value">{% firstof client.owner.get_full_name client.owner.get_username %}</dd>
                     </div>
@@ -96,6 +114,17 @@
                         <dd class="data-value">{{ client.updated_at|date:"d/m/Y H:i" }}</dd>
                     </div>
                 </dl>
+
+                <div class="data-pair">
+                    <p class="data-label">Notas</p>
+                    <div class="data-value">
+                        {% if client.notes %}
+                            {{ client.notes|linebreaksbr }}
+                        {% else %}
+                            Sin notas registradas.
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </section>
 

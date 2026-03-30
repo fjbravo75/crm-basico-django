@@ -1,13 +1,49 @@
+import csv
+from urllib.parse import urlencode
+
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponse
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from .forms import ClientForm, InteractionForm, RegisterForm
 from .models import Client, Interaction
+
+
+CLIENT_STATUS_LABELS_ES = {
+    Client.Status.LEAD: "Inicial",
+    Client.Status.CONTACTED: "Contactado",
+    Client.Status.FOLLOW_UP: "Seguimiento",
+    Client.Status.PROPOSAL: "Propuesta",
+    Client.Status.WON: "Ganado",
+    Client.Status.LOST: "Perdido",
+}
+
+CLIENT_SOURCE_LABELS_ES = {
+    Client.Source.WEBSITE: "Web",
+    Client.Source.REFERRAL: "Referencia",
+    Client.Source.SOCIAL_MEDIA: "Redes sociales",
+    Client.Source.EMAIL_CAMPAIGN: "Campaña de correo",
+    Client.Source.OTHER: "Otro",
+}
+
+
+def get_display_user_name(user):
+    return user.get_full_name() or user.get_username()
+
+
+def get_client_status_label(client):
+    return CLIENT_STATUS_LABELS_ES.get(client.status, client.get_status_display())
+
+
+def get_client_source_label(client):
+    if not client.source:
+        return "Sin especificar"
+    return CLIENT_SOURCE_LABELS_ES.get(client.source, client.get_source_display())
 
 
 def register(request):
@@ -44,6 +80,27 @@ class ClientListView(LoginRequiredMixin, ListView):
     template_name = "crm/client_list.html"
     context_object_name = "clients"
     paginate_by = 5
+    csv_export_param = "export"
+    csv_export_value = "csv"
+    dashboard_status_order = (
+        Client.Status.LEAD,
+        Client.Status.CONTACTED,
+        Client.Status.FOLLOW_UP,
+        Client.Status.PROPOSAL,
+        Client.Status.WON,
+        Client.Status.LOST,
+    )
+    dashboard_in_progress_statuses = {
+        Client.Status.LEAD,
+        Client.Status.CONTACTED,
+        Client.Status.FOLLOW_UP,
+        Client.Status.PROPOSAL,
+    }
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get(self.csv_export_param) == self.csv_export_value:
+            return self.render_to_csv_response(self.get_queryset())
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = get_owned_clients_queryset(self.request.user)
@@ -63,7 +120,99 @@ class ClientListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["search_query"] = self.request.GET.get("q", "").strip()
         context["total_clients"] = context["paginator"].count
+        export_params = []
+        if context["search_query"]:
+            export_params.append(("q", context["search_query"]))
+        export_params.append((self.csv_export_param, self.csv_export_value))
+        context["export_query_string"] = urlencode(export_params)
+        context.update(self.get_dashboard_context(self.object_list))
         return context
+
+    def get_dashboard_context(self, queryset):
+        total_clients = queryset.count()
+
+        if total_clients == 0:
+            return {
+                "show_client_dashboard": False,
+                "dashboard_kpis": [],
+                "dashboard_status_distribution": [],
+            }
+
+        status_counts = {
+            item["status"]: item["count"]
+            for item in queryset.values("status").annotate(count=Count("pk"))
+        }
+        max_status_count = max(status_counts.values(), default=0)
+        dashboard_status_distribution = []
+
+        for status in self.dashboard_status_order:
+            count = status_counts.get(status, 0)
+            dashboard_status_distribution.append(
+                {
+                    "status": status,
+                    "label": CLIENT_STATUS_LABELS_ES[status],
+                    "count": count,
+                    "bar_width": round((count * 100) / max_status_count) if max_status_count else 0,
+                }
+            )
+
+        dashboard_kpis = [
+            {"label": "Total fichas", "value": total_clients},
+            {
+                "label": "Abiertas",
+                "value": sum(
+                    status_counts.get(status, 0)
+                    for status in self.dashboard_in_progress_statuses
+                ),
+            },
+            {"label": "Ganadas", "value": status_counts.get(Client.Status.WON, 0)},
+            {"label": "Perdidas", "value": status_counts.get(Client.Status.LOST, 0)},
+        ]
+
+        return {
+            "show_client_dashboard": True,
+            "dashboard_kpis": dashboard_kpis,
+            "dashboard_status_distribution": dashboard_status_distribution,
+        }
+
+    def render_to_csv_response(self, queryset):
+        response = HttpResponse(content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="clientes.csv"'
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "Nombre",
+                "Apellidos",
+                "Correo",
+                "Teléfono",
+                "Empresa",
+                "Cargo",
+                "Estado",
+                "Origen",
+                "Responsable",
+                "Fecha de creación",
+                "Última actualización",
+            ]
+        )
+
+        for client in queryset:
+            writer.writerow(
+                [
+                    client.first_name,
+                    client.last_name,
+                    client.email,
+                    client.phone,
+                    client.company.name if client.company else "",
+                    client.position,
+                    get_client_status_label(client),
+                    get_client_source_label(client),
+                    get_display_user_name(client.owner),
+                    client.created_at.strftime("%d/%m/%Y %H:%M"),
+                    client.updated_at.strftime("%d/%m/%Y %H:%M"),
+                ]
+            )
+
+        return response
 
 
 class ClientCreateView(LoginRequiredMixin, CreateView):

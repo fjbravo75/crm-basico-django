@@ -12,6 +12,40 @@
             <a class="button button--primary" href="{% url 'crm:client_create' %}">Nuevo cliente</a>
         </div>
 
+        {% if show_client_dashboard %}
+            <section class="panel stats-dashboard" aria-label="Resumen del pipeline comercial">
+                <div class="panel__body panel__body--stack">
+                    <dl class="stats-kpi-grid">
+                        {% for kpi in dashboard_kpis %}
+                            <div class="stats-kpi-card">
+                                <dt class="stats-kpi-card__label">{{ kpi.label }}</dt>
+                                <dd class="stats-kpi-card__value">{{ kpi.value }}</dd>
+                            </div>
+                        {% endfor %}
+                    </dl>
+
+                    <section class="stats-status-panel" aria-labelledby="client-status-chart-title">
+                        <h2 class="section-title" id="client-status-chart-title">Clientes por estado</h2>
+                        <div class="status-bars" role="list">
+                            {% for state in dashboard_status_distribution %}
+                                <div class="status-bars__row" role="listitem">
+                                    <p class="status-bars__label">{{ state.label }}</p>
+                                    <div
+                                        class="status-bars__track"
+                                        aria-hidden="true"
+                                        style="--status-bar-width: {{ state.bar_width }}%;"
+                                    >
+                                        <span class="status-bars__fill"></span>
+                                    </div>
+                                    <p class="status-bars__count">{{ state.count }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+            </section>
+        {% endif %}
+
         <section class="panel">
             <div class="panel__body">
                 <form class="toolbar" method="get">
@@ -34,21 +68,24 @@
                     </div>
                 </form>
 
-                <p class="results-meta">
-                    {% if search_query %}
-                        {% if total_clients == 1 %}
-                            1 cliente encontrado para "{{ search_query }}"
+                <div class="results-meta-row">
+                    <p class="results-meta">
+                        {% if search_query %}
+                            {% if total_clients == 1 %}
+                                1 cliente encontrado para "{{ search_query }}"
+                            {% else %}
+                                {{ total_clients }} clientes encontrados para "{{ search_query }}"
+                            {% endif %}
                         {% else %}
-                            {{ total_clients }} clientes encontrados para "{{ search_query }}"
+                            {% if total_clients == 1 %}
+                                1 cliente disponible
+                            {% else %}
+                                {{ total_clients }} clientes disponibles
+                            {% endif %}
                         {% endif %}
-                    {% else %}
-                        {% if total_clients == 1 %}
-                            1 cliente disponible
-                        {% else %}
-                            {{ total_clients }} clientes disponibles
-                        {% endif %}
-                    {% endif %}
-                </p>
+                    </p>
+                    <a class="results-meta__action" href="?{{ export_query_string }}">Exportar resultados en CSV</a>
+                </div>
             </div>
         </section>
 
@@ -66,7 +103,7 @@
                                 <div class="client-card-actions">
                                     <span class="badge">
                                         {% if client.status == "lead" %}
-                                            Prospecto
+                                            Inicial
                                         {% elif client.status == "contacted" %}
                                             Contactado
                                         {% elif client.status == "follow_up" %}

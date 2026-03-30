@@ -3,11 +3,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.translation import override
 
-from .models import Client, Interaction
+from .models import Client, Company, Interaction
 
 
 STATUS_CHOICES_ES = [
-    (Client.Status.LEAD, "Prospecto"),
+    (Client.Status.LEAD, "Inicial"),
     (Client.Status.CONTACTED, "Contactado"),
     (Client.Status.FOLLOW_UP, "Seguimiento"),
     (Client.Status.PROPOSAL, "Propuesta"),
@@ -91,6 +91,12 @@ class RegisterForm(UserCreationForm):
 
 
 class ClientForm(forms.ModelForm):
+    new_company_name = forms.CharField(
+        label="Nueva empresa",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+    )
+
     class Meta:
         model = Client
         fields = [
@@ -110,7 +116,7 @@ class ClientForm(forms.ModelForm):
             "email": "Correo electrónico",
             "phone": "Teléfono",
             "position": "Cargo",
-            "company": "Empresa",
+            "company": "Empresa existente",
             "status": "Estado",
             "source": "Origen",
             "notes": "Notas",
@@ -132,6 +138,47 @@ class ClientForm(forms.ModelForm):
         self.fields["company"].empty_label = "Sin empresa"
         self.fields["status"].choices = STATUS_CHOICES_ES
         self.fields["source"].choices = SOURCE_CHOICES_ES
+        self.order_fields(
+            [
+                "first_name",
+                "last_name",
+                "email",
+                "phone",
+                "position",
+                "company",
+                "new_company_name",
+                "status",
+                "source",
+                "notes",
+            ]
+        )
+
+    def clean_new_company_name(self):
+        return self.cleaned_data.get("new_company_name", "").strip()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        company = cleaned_data.get("company")
+        new_company_name = cleaned_data.get("new_company_name", "")
+
+        if company and new_company_name:
+            message = "Usa solo una de las dos opciones de empresa."
+            self.add_error("company", message)
+            self.add_error("new_company_name", message)
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        company = self.cleaned_data.get("company")
+        new_company_name = self.cleaned_data.get("new_company_name", "")
+
+        if new_company_name:
+            company = Company.objects.filter(name__iexact=new_company_name).first()
+            if company is None:
+                company = Company.objects.create(name=new_company_name)
+
+        self.instance.company = company
+        return super().save(commit=commit)
 
 
 class InteractionForm(forms.ModelForm):

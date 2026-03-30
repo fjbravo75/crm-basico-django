@@ -1,3 +1,4 @@
+import csv
 from io import StringIO
 
 from django.contrib.auth import get_user_model
@@ -182,6 +183,28 @@ class DemoSeedCommandTests(CRMBaseTestCase):
         self.assertIn("reutilizado", second_output)
         self.assertIn(DEMO_PASSWORD, second_output)
 
+    def test_seed_keeps_initial_state_coherent_with_visible_activity(self):
+        self.run_seed()
+        demo_user = get_user_model().objects.get(username=DEMO_USER["username"])
+
+        self.assertEqual(
+            Client.objects.get(email="laura.suarez@auroratech.example").status,
+            Client.Status.CONTACTED,
+        )
+        self.assertEqual(
+            Client.objects.get(email="ana.beltran@costaretail.example").status,
+            Client.Status.FOLLOW_UP,
+        )
+        self.assertEqual(
+            Client.objects.get(email="carlos.vega@nexoindustrial.example").status,
+            Client.Status.CONTACTED,
+        )
+        self.assertFalse(
+            Client.objects.filter(owner=demo_user, status=Client.Status.LEAD)
+            .filter(interactions__isnull=False)
+            .exists()
+        )
+
 
 class RegistrationFlowTests(CRMBaseTestCase):
     registration_password = "ClaveTemporal123"
@@ -298,6 +321,16 @@ class ClientCreateFlowTests(CRMBaseTestCase):
         self.assertContains(response, "Nuevo cliente")
         self.assertContains(response, reverse("crm:client_create"))
 
+    def test_client_create_form_shows_initial_status_label(self):
+        response = self.client.get(reverse("crm:client_create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Inicial")
+        self.assertContains(response, "Empresa existente")
+        self.assertContains(response, "Nueva empresa")
+        self.assertNotContains(response, "Prospecto")
+        self.assertNotContains(response, "Sin contactar")
+
     def test_create_client_redirects_to_list_and_shows_new_entry(self):
         response = self.client.post(
             reverse("crm:client_create"),
@@ -324,6 +357,74 @@ class ClientCreateFlowTests(CRMBaseTestCase):
         self.assertContains(list_response, "Ana")
         self.assertContains(list_response, "Torres")
 
+    def test_create_client_with_new_company_creates_and_assigns_company(self):
+        response = self.client.post(
+            reverse("crm:client_create"),
+            data={
+                "first_name": "Nora",
+                "last_name": "Sanz",
+                "email": "nora.sanz@example.com",
+                "phone": "+34 600 000 010",
+                "position": "Comercial",
+                "company": "",
+                "new_company_name": "Nueva Empresa CRM",
+                "status": Client.Status.LEAD,
+                "source": "",
+                "notes": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("crm:client_list"))
+
+        company = Company.objects.get(name="Nueva Empresa CRM")
+        client = Client.objects.get(email="nora.sanz@example.com")
+        self.assertEqual(client.company, company)
+
+    def test_create_client_reuses_existing_company_when_new_company_matches(self):
+        response = self.client.post(
+            reverse("crm:client_create"),
+            data={
+                "first_name": "Eva",
+                "last_name": "Lopez",
+                "email": "eva.lopez@example.com",
+                "phone": "+34 600 000 011",
+                "position": "Comercial",
+                "company": "",
+                "new_company_name": "  Empresa Demo  ",
+                "status": Client.Status.CONTACTED,
+                "source": "",
+                "notes": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("crm:client_list"))
+        self.assertEqual(Company.objects.filter(name__iexact="Empresa Demo").count(), 1)
+        self.assertEqual(
+            Client.objects.get(email="eva.lopez@example.com").company,
+            self.company,
+        )
+
+    def test_create_client_form_rejects_existing_and_new_company_at_same_time(self):
+        response = self.client.post(
+            reverse("crm:client_create"),
+            data={
+                "first_name": "Sara",
+                "last_name": "Mora",
+                "email": "sara.mora@example.com",
+                "phone": "+34 600 000 012",
+                "position": "Comercial",
+                "company": self.company.pk,
+                "new_company_name": "Otra Empresa",
+                "status": Client.Status.LEAD,
+                "source": "",
+                "notes": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Usa solo una de las dos opciones de empresa.")
+        self.assertFalse(Client.objects.filter(email="sara.mora@example.com").exists())
+
 
 class ClientDetailFlowTests(CRMBaseTestCase):
     def setUp(self):
@@ -338,6 +439,8 @@ class ClientDetailFlowTests(CRMBaseTestCase):
             company=self.company,
             owner=self.owner,
             status=Client.Status.CONTACTED,
+            source=Client.Source.REFERRAL,
+            notes="Quiere revisar una demo corta antes de tomar una decisión.",
         )
         self.login_user()
 
@@ -359,7 +462,38 @@ class ClientDetailFlowTests(CRMBaseTestCase):
         self.assertContains(response, "Empresa Demo")
         self.assertContains(response, "Directora Comercial")
         self.assertContains(response, "Contactado")
+        self.assertContains(response, "Origen")
+        self.assertContains(response, "Referencia")
+        self.assertContains(response, "Notas")
+        self.assertContains(response, "Quiere revisar una demo corta antes de tomar una decisión.")
         self.assertContains(response, self.owner.get_username())
+
+    def test_client_list_and_detail_render_initial_label_for_lead_status(self):
+        self.client_record.status = Client.Status.LEAD
+        self.client_record.save(update_fields=["status"])
+
+        list_response = self.client.get(reverse("crm:client_list"))
+        detail_response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertContains(list_response, "Inicial")
+        self.assertNotContains(list_response, "Prospecto")
+        self.assertNotContains(list_response, "Sin contactar")
+        self.assertContains(detail_response, "Inicial")
+        self.assertNotContains(detail_response, "Prospecto")
+        self.assertNotContains(detail_response, "Sin contactar")
+
+    def test_client_detail_shows_discrete_empty_state_for_source_and_notes(self):
+        self.client_record.source = ""
+        self.client_record.notes = ""
+        self.client_record.save(update_fields=["source", "notes"])
+
+        response = self.client.get(reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Origen")
+        self.assertContains(response, "Sin especificar")
+        self.assertContains(response, "Notas")
+        self.assertContains(response, "Sin notas registradas.")
 
 
 class HumanDisplayTests(CRMBaseTestCase):
@@ -433,6 +567,8 @@ class ClientUpdateFlowTests(CRMBaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Editar cliente")
+        self.assertContains(response, "Empresa existente")
+        self.assertContains(response, "Nueva empresa")
         self.assertContains(response, 'value="Lucia"')
         self.assertContains(response, 'value="Martinez"')
         self.assertContains(response, 'value="lucia.martinez@example.com"')
@@ -484,6 +620,28 @@ class ClientUpdateFlowTests(CRMBaseTestCase):
 
         self.client_record.refresh_from_db()
         self.assertEqual(self.client_record.first_name, "Lucia")
+
+    def test_update_view_can_replace_company_with_new_company_name(self):
+        response = self.client.post(
+            reverse("crm:client_update", args=[self.client_record.pk]),
+            data={
+                "first_name": "Lucia",
+                "last_name": "Martinez",
+                "email": "lucia.martinez@example.com",
+                "phone": "+34 600 000 002",
+                "position": "Directora Comercial",
+                "company": "",
+                "new_company_name": "Empresa Nueva Editada",
+                "status": Client.Status.CONTACTED,
+                "source": "",
+                "notes": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("crm:client_detail", args=[self.client_record.pk]))
+
+        self.client_record.refresh_from_db()
+        self.assertEqual(self.client_record.company.name, "Empresa Nueva Editada")
 
 
 class ClientDeleteFlowTests(CRMBaseTestCase):
@@ -703,6 +861,307 @@ class ClientListPaginationTests(CRMBaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '6 clientes encontrados para "Filtro"')
         self.assertNotContains(response, '5 clientes encontrados para "Filtro"')
+
+
+class ClientListCsvExportTests(CRMBaseTestCase):
+    def setUp(self):
+        self.owner = self.create_user(
+            username="maria.ortega",
+            first_name="María",
+            last_name="Ortega",
+        )
+        self.other_user = self.create_user(
+            username="otro-responsable",
+            first_name="Carlos",
+            last_name="López",
+        )
+        self.company = Company.objects.create(name="Empresa Demo")
+        self.other_company = Company.objects.create(name="Otra Empresa")
+
+        for index in range(6):
+            Client.objects.create(
+                first_name=f"Filtro{index}",
+                last_name="Busqueda",
+                email=f"filtro{index}@example.com",
+                phone=f"+34 600 000 10{index}",
+                position="Comercial",
+                company=self.company,
+                owner=self.owner,
+                status=Client.Status.CONTACTED,
+                source=Client.Source.REFERRAL,
+            )
+
+        self.special_client = Client.objects.create(
+            first_name="Laura",
+            last_name="Torres",
+            email="laura.torres@example.com",
+            phone="+34 600 000 200",
+            position="Directora Comercial",
+            company=self.other_company,
+            owner=self.owner,
+            status=Client.Status.PROPOSAL,
+            source=Client.Source.SOCIAL_MEDIA,
+        )
+        self.foreign_client = Client.objects.create(
+            first_name="Carlos",
+            last_name="Ajeno",
+            email="carlos.ajeno@example.com",
+            phone="+34 600 999 999",
+            position="Gerente",
+            company=self.other_company,
+            owner=self.other_user,
+            status=Client.Status.WON,
+            source=Client.Source.WEBSITE,
+        )
+        self.login_user()
+
+    def parse_csv_rows(self, response):
+        content = response.content.decode("utf-8")
+        return list(csv.reader(StringIO(content)))
+
+    def test_client_list_shows_csv_export_link_in_results_row(self):
+        response = self.client.get(reverse("crm:client_list"), {"q": "Filtro"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Exportar resultados en CSV")
+        self.assertContains(response, "?q=Filtro&amp;export=csv")
+
+    def test_csv_export_downloads_owned_clients_with_expected_columns(self):
+        response = self.client.get(reverse("crm:client_list"), {"export": "csv"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn('attachment; filename="clientes.csv"', response["Content-Disposition"])
+
+        rows = self.parse_csv_rows(response)
+
+        self.assertEqual(
+            rows[0],
+            [
+                "Nombre",
+                "Apellidos",
+                "Correo",
+                "Teléfono",
+                "Empresa",
+                "Cargo",
+                "Estado",
+                "Origen",
+                "Responsable",
+                "Fecha de creación",
+                "Última actualización",
+            ],
+        )
+        self.assertEqual(len(rows) - 1, 7)
+        exported_emails = [row[2] for row in rows[1:]]
+        self.assertIn("laura.torres@example.com", exported_emails)
+        self.assertNotIn("carlos.ajeno@example.com", exported_emails)
+
+        special_row = next(row for row in rows[1:] if row[2] == "laura.torres@example.com")
+        self.assertEqual(special_row[4], "Otra Empresa")
+        self.assertEqual(special_row[5], "Directora Comercial")
+        self.assertEqual(special_row[6], "Propuesta")
+        self.assertEqual(special_row[7], "Redes sociales")
+        self.assertEqual(special_row[8], "María Ortega")
+
+    def test_csv_export_respects_search_query_filter(self):
+        response = self.client.get(reverse("crm:client_list"), {"q": "Filtro", "export": "csv"})
+
+        self.assertEqual(response.status_code, 200)
+        rows = self.parse_csv_rows(response)
+        exported_emails = [row[2] for row in rows[1:]]
+
+        self.assertEqual(len(rows) - 1, 6)
+        self.assertTrue(all(email.startswith("filtro") for email in exported_emails))
+        self.assertNotIn("laura.torres@example.com", exported_emails)
+
+    def test_csv_export_ignores_current_page_and_exports_full_filtered_set(self):
+        response = self.client.get(
+            reverse("crm:client_list"),
+            {"q": "Filtro", "page": 2, "export": "csv"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        rows = self.parse_csv_rows(response)
+
+        self.assertEqual(len(rows) - 1, 6)
+
+    def test_csv_export_uses_initial_label_for_lead_status(self):
+        Client.objects.create(
+            first_name="Nora",
+            last_name="Inicial",
+            email="nora.inicial@example.com",
+            phone="+34 600 123 123",
+            position="Comercial",
+            company=self.company,
+            owner=self.owner,
+            status=Client.Status.LEAD,
+            source=Client.Source.WEBSITE,
+        )
+
+        response = self.client.get(reverse("crm:client_list"), {"export": "csv"})
+        rows = self.parse_csv_rows(response)
+
+        lead_row = next(row for row in rows[1:] if row[2] == "nora.inicial@example.com")
+        self.assertEqual(lead_row[6], "Inicial")
+
+
+class ClientListDashboardStatsTests(CRMBaseTestCase):
+    def setUp(self):
+        self.owner = self.create_user(
+            username="maria.ortega",
+            first_name="María",
+            last_name="Ortega",
+        )
+        self.other_user = self.create_user(
+            username="otro-responsable",
+            first_name="Carlos",
+            last_name="López",
+        )
+        self.base_company = Company.objects.create(name="Empresa General")
+        self.filter_company = Company.objects.create(name="Empresa Filtro")
+
+        for first_name, status in (
+            ("Alicia", Client.Status.LEAD),
+            ("Bruno", Client.Status.WON),
+            ("Celia", Client.Status.LOST),
+        ):
+            Client.objects.create(
+                first_name=first_name,
+                last_name="Base",
+                email=f"{first_name.lower()}@example.com",
+                company=self.base_company,
+                owner=self.owner,
+                status=status,
+            )
+
+        for first_name, status in (
+            ("Laura", Client.Status.LEAD),
+            ("Marta", Client.Status.CONTACTED),
+            ("Noa", Client.Status.FOLLOW_UP),
+            ("Olga", Client.Status.PROPOSAL),
+            ("Paula", Client.Status.PROPOSAL),
+            ("Rocio", Client.Status.WON),
+        ):
+            Client.objects.create(
+                first_name=first_name,
+                last_name="Filtro",
+                email=f"{first_name.lower()}.filtro@example.com",
+                company=self.filter_company,
+                owner=self.owner,
+                status=status,
+            )
+
+        Client.objects.create(
+            first_name="Xavier",
+            last_name="Ajeno",
+            email="xavier.ajeno@example.com",
+            company=self.filter_company,
+            owner=self.other_user,
+            status=Client.Status.LOST,
+        )
+        self.login_user()
+
+    def get_dashboard_kpis(self, response):
+        return {item["label"]: item["value"] for item in response.context["dashboard_kpis"]}
+
+    def get_status_distribution(self, response):
+        return {
+            item["status"]: item
+            for item in response.context["dashboard_status_distribution"]
+        }
+
+    def test_client_list_renders_dashboard_with_expected_texts(self):
+        response = self.client.get(reverse("crm:client_list"))
+        distribution = self.get_status_distribution(response)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["show_client_dashboard"])
+        self.assertEqual(
+            [item["label"] for item in response.context["dashboard_kpis"]],
+            ["Total fichas", "Abiertas", "Ganadas", "Perdidas"],
+        )
+        self.assertEqual(distribution["lead"]["label"], "Inicial")
+        self.assertContains(response, "Total fichas")
+        self.assertContains(response, "Abiertas")
+        self.assertContains(response, "Ganadas")
+        self.assertContains(response, "Perdidas")
+        self.assertContains(response, "Inicial")
+        self.assertContains(response, "Clientes por estado")
+
+    def test_dashboard_kpis_use_exact_counts_for_current_queryset(self):
+        response = self.client.get(reverse("crm:client_list"))
+        kpis = self.get_dashboard_kpis(response)
+
+        self.assertEqual(kpis["Total fichas"], 9)
+        self.assertEqual(kpis["Abiertas"], 6)
+        self.assertEqual(kpis["Ganadas"], 2)
+        self.assertEqual(kpis["Perdidas"], 1)
+        self.assertEqual(
+            kpis["Abiertas"] + kpis["Ganadas"] + kpis["Perdidas"],
+            kpis["Total fichas"],
+        )
+
+    def test_dashboard_distribution_respects_ownership(self):
+        response = self.client.get(reverse("crm:client_list"))
+        distribution = self.get_status_distribution(response)
+
+        self.assertEqual(distribution["lead"]["count"], 2)
+        self.assertEqual(distribution["contacted"]["count"], 1)
+        self.assertEqual(distribution["follow_up"]["count"], 1)
+        self.assertEqual(distribution["proposal"]["count"], 2)
+        self.assertEqual(distribution["won"]["count"], 2)
+        self.assertEqual(distribution["lost"]["count"], 1)
+        self.assertEqual(distribution["proposal"]["bar_width"], 100)
+        self.assertEqual(distribution["lost"]["bar_width"], 50)
+
+    def test_dashboard_distribution_follows_search_query(self):
+        response = self.client.get(reverse("crm:client_list"), {"q": "Filtro"})
+        kpis = self.get_dashboard_kpis(response)
+        distribution = self.get_status_distribution(response)
+
+        self.assertEqual(kpis["Total fichas"], 6)
+        self.assertEqual(kpis["Abiertas"], 5)
+        self.assertEqual(kpis["Ganadas"], 1)
+        self.assertEqual(kpis["Perdidas"], 0)
+        self.assertEqual(
+            kpis["Abiertas"] + kpis["Ganadas"] + kpis["Perdidas"],
+            kpis["Total fichas"],
+        )
+        self.assertEqual(distribution["lead"]["count"], 1)
+        self.assertEqual(distribution["contacted"]["count"], 1)
+        self.assertEqual(distribution["follow_up"]["count"], 1)
+        self.assertEqual(distribution["proposal"]["count"], 2)
+        self.assertEqual(distribution["won"]["count"], 1)
+        self.assertEqual(distribution["lost"]["count"], 0)
+        self.assertEqual(distribution["proposal"]["bar_width"], 100)
+        self.assertEqual(distribution["lead"]["bar_width"], 50)
+
+    def test_dashboard_uses_full_filtered_queryset_not_current_page(self):
+        response = self.client.get(reverse("crm:client_list"), {"q": "Filtro", "page": 2})
+        kpis = self.get_dashboard_kpis(response)
+        distribution = self.get_status_distribution(response)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["clients"]), 1)
+        self.assertEqual(kpis["Total fichas"], 6)
+        self.assertEqual(kpis["Abiertas"], 5)
+        self.assertEqual(kpis["Ganadas"], 1)
+        self.assertEqual(kpis["Perdidas"], 0)
+        self.assertEqual(distribution["proposal"]["count"], 2)
+        self.assertEqual(distribution["lost"]["count"], 0)
+
+    def test_dashboard_is_hidden_when_filtered_queryset_is_empty(self):
+        response = self.client.get(reverse("crm:client_list"), {"q": "Sin coincidencias"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["show_client_dashboard"])
+        self.assertEqual(response.context["dashboard_kpis"], [])
+        self.assertEqual(response.context["dashboard_status_distribution"], [])
+        self.assertNotContains(response, "Total fichas")
+        self.assertNotContains(response, "Abiertas")
+        self.assertNotContains(response, "Ganadas")
+        self.assertNotContains(response, "Perdidas")
+        self.assertNotContains(response, "Clientes por estado")
 
 
 class InteractionCreateFlowTests(CRMBaseTestCase):
