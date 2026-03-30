@@ -29,11 +29,13 @@
                     <p class="auth-card__text">Entra con tu usuario y contraseña para continuar.</p>
                 </div>
 
-                <div class="auth-demo" aria-label="Acceso de demostración">
-                    <p class="auth-demo__title">Acceso de demostración</p>
-                    <p class="auth-demo__row"><span class="auth-demo__label">Usuario demo</span><strong class="auth-demo__value">{{ demo_username }}</strong></p>
-                    <p class="auth-demo__row"><span class="auth-demo__label">Contraseña demo</span><strong class="auth-demo__value">{{ demo_password }}</strong></p>
-                </div>
+                {% if show_demo_access %}
+                    <div class="auth-demo" aria-label="Acceso de demostración">
+                        <p class="auth-demo__title">Acceso de demostración</p>
+                        <p class="auth-demo__row"><span class="auth-demo__label">Usuario demo</span><strong class="auth-demo__value">{{ demo_username }}</strong></p>
+                        <p class="auth-demo__row"><span class="auth-demo__label">Contraseña demo</span><strong class="auth-demo__value">{{ demo_password }}</strong></p>
+                    </div>
+                {% endif %}
 
                 <form class="auth-form auth-form--login" method="post" novalidate>
                     {% csrf_token %}
@@ -72,8 +74,12 @@
                 </form>
 
                 <div class="auth-card__footer">
-                    <p class="auth-card__meta">Si aún no tienes cuenta, puedes crearla y empezar a trabajar ahora mismo.</p>
-                    <a class="auth-card__link" href="{% url 'register' %}">Crear cuenta</a>
+                    {% if allow_public_registration %}
+                        <p class="auth-card__meta">Si aún no tienes cuenta, puedes crearla y empezar a trabajar ahora mismo.</p>
+                        <a class="auth-card__link" href="{% url 'register' %}">Crear cuenta</a>
+                    {% else %}
+                        <p class="auth-card__meta">El acceso a esta instalación se gestiona de forma interna.</p>
+                    {% endif %}
                 </div>
             </section>
         </div>

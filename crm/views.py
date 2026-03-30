@@ -1,8 +1,10 @@
 import csv
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
@@ -11,6 +13,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from .forms import ClientForm, InteractionForm, RegisterForm
+from .management.commands.seed_demo_crm import DEMO_PASSWORD, DEMO_USER
 from .models import Client, Interaction
 
 
@@ -46,9 +49,28 @@ def get_client_source_label(client):
     return CLIENT_SOURCE_LABELS_ES.get(client.source, client.get_source_display())
 
 
+class CRMLoginView(LoginView):
+    template_name = "registration/login.html"
+    redirect_authenticated_user = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["show_demo_access"] = settings.SHOW_DEMO_ACCESS
+        context["allow_public_registration"] = settings.ALLOW_PUBLIC_REGISTRATION
+
+        if settings.SHOW_DEMO_ACCESS:
+            context["demo_username"] = DEMO_USER["username"]
+            context["demo_password"] = DEMO_PASSWORD
+
+        return context
+
+
 def register(request):
     if request.user.is_authenticated:
         return redirect("crm:client_list")
+
+    if not settings.ALLOW_PUBLIC_REGISTRATION:
+        return redirect("login")
 
     if request.method == "POST":
         form = RegisterForm(request.POST)

@@ -10,22 +10,107 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+from urllib.parse import unquote, urlparse
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _load_env_file(env_path):
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+
+        if value and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+
+        os.environ.setdefault(key, value)
+
+
+def _get_bool_env(name, default=False):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+
+    normalized_value = value.strip().lower()
+    if normalized_value in {"1", "true", "yes", "on"}:
+        return True
+    if normalized_value in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
+def _get_list_env(name, default=None):
+    if default is None:
+        default = []
+
+    value = os.environ.get(name)
+    if value is None:
+        return default
+
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _database_config_from_url(database_url):
+    parsed_url = urlparse(database_url)
+
+    if parsed_url.scheme not in {"postgres", "postgresql"}:
+        raise ValueError(f"Unsupported DATABASE_URL scheme: {parsed_url.scheme}")
+
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": unquote(parsed_url.path.lstrip("/")),
+        "USER": unquote(parsed_url.username or ""),
+        "PASSWORD": unquote(parsed_url.password or ""),
+        "HOST": parsed_url.hostname or "",
+        "PORT": str(parsed_url.port or ""),
+    }
+
+
+def _build_database_config():
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    if database_url:
+        return _database_config_from_url(database_url)
+
+    return {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+
+
+_load_env_file(BASE_DIR / ".env")
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@+e_i3ykyvs=e*l*_ujjcc_fr$g#xx40stn67&nub#kd8)tr1e'
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = _get_bool_env("DEBUG", default=True)
 
-ALLOWED_HOSTS = []
+SHOW_DEMO_ACCESS = _get_bool_env("SHOW_DEMO_ACCESS", default=DEBUG)
+ALLOW_PUBLIC_REGISTRATION = _get_bool_env("ALLOW_PUBLIC_REGISTRATION", default=DEBUG)
+
+DEV_SECRET_KEY = "local-dev-only-change-me-2t6ch4v3c8w9q7b5n1m0k8r6s4p2x9y"
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get("SECRET_KEY", DEV_SECRET_KEY)
+if not DEBUG and SECRET_KEY == DEV_SECRET_KEY:
+    raise ImproperlyConfigured("Set the SECRET_KEY environment variable when DEBUG=False.")
+
+ALLOWED_HOSTS = _get_list_env("ALLOWED_HOSTS", default=[])
+CSRF_TRUSTED_ORIGINS = _get_list_env("CSRF_TRUSTED_ORIGINS", default=[])
 
 
 # Application definition
@@ -74,10 +159,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": _build_database_config()
 }
 
 
@@ -115,7 +197,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "crm:client_list"

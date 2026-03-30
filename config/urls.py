@@ -15,24 +15,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LogoutView
 from django.urls import include, path
-from crm.management.commands.seed_demo_crm import DEMO_PASSWORD, DEMO_USER
-from crm.views import register
+
+from crm.views import CRMLoginView, register
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("acceso/registro/", register, name="register"),
     path(
         "acceso/login/",
-        LoginView.as_view(
-            template_name="registration/login.html",
-            redirect_authenticated_user=True,
-            extra_context={
-                "demo_username": DEMO_USER["username"],
-                "demo_password": DEMO_PASSWORD,
-            },
-        ),
+        CRMLoginView.as_view(),
         name="login",
     ),
     path("acceso/logout/", LogoutView.as_view(), name="logout"),
