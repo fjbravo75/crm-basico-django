@@ -1,55 +1,99 @@
 # CRM Básico con Django
 
-Aplicación web construida con Django para gestionar clientes y actividad comercial de una forma clara y fácil de seguir.  
+Aplicación web de gestión comercial construida con Django para organizar clientes, registrar actividad y seguir un flujo comercial pequeño pero realista desde una interfaz clara y centrada en el trabajo diario.
+
 En la interfaz, la aplicación se muestra como **Gestor de clientes**.
+
+**Demo en vivo:** https://crm.franciscojbravo.com  
+**Acceso demo:** `maria.ortega` / `DemoCRM123!`  
+**Stack principal:** Python, Django, PostgreSQL, SQLite, HTML, CSS
 
 ## Resumen
 
-**CRM Básico** es una aplicación web desarrollada con Django para trabajar un flujo comercial pequeño pero realista sin añadir más complejidad de la necesaria.
+CRM Básico permite a cada usuario gestionar sus propios clientes, asociarlos a una empresa cuando corresponde y registrar actividad comercial desde la propia ficha del cliente.
 
-La idea del proyecto es sencilla: cada usuario puede gestionar sus propios clientes, asociarlos a una empresa cuando corresponde y registrar actividad comercial desde la propia ficha del cliente. La intención no ha sido construir un CRM grande, sino una aplicación pequeña, seria y fácil de explicar.
+La aplicación está pensada como un proyecto Django server-rendered pequeño, serio y fácil de explicar. No busca cubrir un CRM grande ni complejo, sino resolver bien un núcleo funcional reconocible: clientes, actividad, búsqueda, estado comercial y una presentación suficientemente clara para demo, portfolio y revisión técnica.
 
-Este proyecto me ha servido para practicar una parte muy útil de Django: modelos relacionados, vistas, formularios, validaciones, control de acceso básico, pruebas y cierre más limpio de una entrega.
+Actualmente está desplegada públicamente, puede probarse con acceso demo y también puede ejecutarse en local con una base de datos de ejemplo generada mediante comando.
+
+## Vista previa
+
+Estas son algunas vistas reales de la aplicación en su estado actual.
+
+<p align="center">
+  <img src="docs/images/login.png" alt="Pantalla de inicio de sesión de CRM Básico" width="48%">
+  <img src="docs/images/client-list.png" alt="Listado de clientes con dashboard y buscador en CRM Básico" width="48%">
+</p>
+
+<p align="center">
+  <img src="docs/images/client-detail.png" alt="Detalle de cliente con actividad comercial en CRM Básico" width="48%">
+  <img src="docs/images/client-form.png" alt="Formulario de edición de cliente en CRM Básico" width="48%">
+</p>
 
 ## Qué permite hacer
 
-La aplicación permite:
+### Gestión de acceso
+- registro de cuenta
+- login y logout
+- acceso aislado por usuario
+- acceso demo visible desde la pantalla de login
 
-- registrarse, iniciar sesión y cerrar sesión
+### Gestión comercial
 - crear, editar y eliminar clientes
-- asociar cada cliente a una empresa existente o crear una nueva desde el propio formulario
+- asociar cada cliente a una empresa existente
+- crear una nueva empresa directamente desde el formulario del cliente
 - registrar, editar y eliminar actividad desde la ficha del cliente
-- buscar clientes por nombre, correo o empresa
-- limitar el acceso para que cada usuario solo vea y modifique sus propios clientes y su actividad asociada
-- exportar en CSV el conjunto filtrado del listado principal
-- consultar un mini dashboard de estados dentro del listado
-- cargar una demo reproducible con un comando manual
 
-He intentado mantener un alcance razonable: suficiente para que la aplicación tenga sentido de verdad, pero sin añadir funciones que luego costaría justificar o mantener.
+### Seguimiento y consulta
+- buscar clientes por nombre, correo o empresa
+- seguir estados comerciales dentro de un pipeline simple
+- consultar un mini dashboard de estados en el listado principal
+- revisar la actividad y los próximos pasos desde la propia ficha del cliente
+
+### Salida y demo
+- exportar en CSV el listado filtrado de clientes
+- cargar una demo reproducible con datos realistas mediante comando de siembra
+
+## Qué incluye
+
+- modelado relacional con clientes, empresas y actividad comercial
+- vistas y formularios renderizados en servidor
+- autenticación y autorización básica por usuario
+- CRUD completo sobre clientes y actividad
+- búsqueda integrada en el flujo principal
+- validaciones a nivel de formulario y servidor
+- tests funcionales y de comportamiento
+- despliegue público en producción
 
 ## Stack utilizado
 
-El proyecto está construido con una base directa:
+- **Python**
+- **Django**
+- **PostgreSQL** en producción
+- **SQLite** en local
+- **HTML renderizado en servidor**
+- **CSS propio**
+- **Tests con Django TestCase**
 
-- Python
-- Django
-- SQLite en local
-- configuración preparada por entorno para PostgreSQL mediante `DATABASE_URL`
-- plantillas HTML renderizadas en servidor
-- CSS propio
-- Gunicorn como runtime de aplicación para un despliegue posterior
-- pruebas con `Django TestCase`
+## Demo en vivo
 
-He preferido mantener el proyecto como una aplicación renderizada con Django, sin separar frontend ni abrir más capas de las que realmente hacían falta en esta etapa.
+La aplicación está disponible en:
 
-## Cómo ejecutar el proyecto en local
+**https://crm.franciscojbravo.com**
+
+Puedes entrar con las credenciales demo:
+
+- **Usuario:** `maria.ortega`
+- **Contraseña:** `DemoCRM123!`
+
+## Cómo ejecutarlo en local
 
 ### 1. Clonar el repositorio
 
-    git clone <URL_DEL_REPOSITORIO>
-    cd crm-basico
+    git clone https://github.com/fjbravo75/crm-basico-django.git
+    cd crm-basico-django
 
-### 2. Crear y activar un entorno virtual
+### 2. Crear y activar entorno virtual
 
 En Linux o WSL:
 
@@ -65,35 +109,35 @@ En Windows:
 
     pip install -r requirements.txt
 
-### 4. Crear el archivo de entorno
+### 4. Preparar variables de entorno
 
-Puedes partir del archivo de ejemplo:
+Copia el archivo de ejemplo:
 
     cp .env.example .env
 
-Si no se define una base de datos externa, el proyecto usará SQLite en local por defecto.
+Después, ajusta los valores si lo necesitas.
 
 ### 5. Aplicar migraciones
 
     python manage.py migrate
 
-### 6. Cargar la demo opcional
-
-Si quieres revisar la aplicación con contenido de ejemplo desde el principio:
+### 6. Cargar demo reproducible
 
     python manage.py seed_demo_crm
 
-### 7. Arrancar el servidor
+### 7. Levantar servidor local
 
     python manage.py runserver
 
-La aplicación quedará disponible en la dirección local habitual de Django. El acceso principal queda en:
+La aplicación quedará disponible en:
 
-    http://127.0.0.1:8000/acceso/login/
+`http://127.0.0.1:8000/acceso/login/`
 
 ## Variables de entorno
 
-El proyecto incluye un archivo `.env.example` con las variables principales:
+El proyecto incluye un archivo `.env.example` con la configuración base necesaria para arrancar.
+
+Variables principales:
 
 - `SECRET_KEY`
 - `DEBUG`
@@ -103,66 +147,42 @@ El proyecto incluye un archivo `.env.example` con las variables principales:
 - `SHOW_DEMO_ACCESS`
 - `ALLOW_PUBLIC_REGISTRATION`
 
-Si `DATABASE_URL` no se define, la aplicación funciona con SQLite en local. Si existe, el proyecto pasa a PostgreSQL.
-
-### Comportamiento de acceso según entorno
-
-En local o con `DEBUG=True`, el acceso demo visible y el registro público quedan abiertos por defecto.
-
-Con `DEBUG=False`, ambos quedan cerrados por defecto. Si hiciera falta ajustar ese comportamiento en un despliegue concreto, puede hacerse con `SHOW_DEMO_ACCESS` y `ALLOW_PUBLIC_REGISTRATION`.
+En local puede funcionar con SQLite sin configuración extra. En producción está preparado para usar PostgreSQL mediante `DATABASE_URL`.
 
 ## Demo reproducible
 
-La aplicación incorpora este comando:
+El proyecto incluye un comando de siembra para generar una base de datos de ejemplo de forma rápida y consistente:
 
     python manage.py seed_demo_crm
 
-Este comando crea o actualiza un espacio demo pensado para poder revisar la aplicación con contenido desde el principio. La demo incluye:
+Este comando crea una demo con:
 
-- 1 usuario demo
-- 3 empresas
-- 12 clientes
-- 29 actividades
+- **1 usuario demo**
+- **3 empresas**
+- **12 clientes**
+- **29 actividades**
 
-Por defecto, las credenciales demo son:
+Credenciales demo por defecto:
 
-- usuario: `maria.ortega`
-- contraseña: `DemoCRM123!`
+- **Usuario:** `maria.ortega`
+- **Contraseña:** `DemoCRM123!`
 
-Estas credenciales visibles están pensadas para revisión local. Con `DEBUG=False`, el acceso demo visible no queda expuesto por defecto.
+## Decisiones de implementación
 
-## Tests
-
-El proyecto incluye una suite de pruebas para validar el comportamiento principal de la aplicación. En el cierre actual se cubren bloques como:
-
-- autenticación y registro
-- seed demo
-- CRUD de clientes
-- CRUD de actividad
-- ownership
-- búsqueda
-- paginación
-- exportación CSV
-- dashboard
-
-Para ejecutar los tests:
-
-    python manage.py test
-
-También se puede hacer una comprobación básica del proyecto con:
-
-    python manage.py check
+- aplicación Django renderizada en servidor
+- alcance contenido y centrado en el flujo principal del producto
+- actividad resuelta dentro del detalle del cliente, sin abrir módulos laterales innecesarios
+- demo reproducible mediante comando de siembra
+- despliegue público con base de datos real en producción
 
 ## Estado actual del proyecto
 
-A día de hoy, el proyecto queda cerrado como una entrega funcional en local, con una demo reproducible y una configuración de entorno más limpia que depender simplemente de una base de datos ya rellenada a mano.
+El proyecto está desplegado y puede probarse directamente desde la demo pública.
 
-Todavía no incluye un despliegue real completamente cerrado, ni permisos avanzados, ni una capa más grande de gestión comercial, porque ese no era el objetivo de esta fase. Lo que sí deja es un CRM pequeño pero serio, con un núcleo funcional bien resuelto y fácil de enseñar en GitHub.
+A día de hoy incluye:
 
-## Aprendizajes
-
-Este proyecto me ha servido para practicar una parte bastante útil de Django: construir una aplicación web con entidades relacionadas, controlar un flujo de trabajo real sobre clientes, registrar actividad, limitar el acceso por usuario y acompañar todo eso con pruebas.
-
-También me ha ayudado a pensar mejor el cierre de una entrega. No solo en hacer que una funcionalidad exista, sino en dejar el proyecto más fácil de revisar, más claro de levantar en local y mejor preparado para seguir trabajando sobre él después.
-
-He intentado que el resultado final no se quede solo en una práctica de curso, sino en un proyecto pequeño, serio y explicable, que pueda enseñar con naturalidad y defender con honestidad.
+- acceso demo visible
+- despliegue operativo en producción
+- base local reproducible
+- flujo principal de clientes y actividad cerrado
+- estructura clara para revisión del código y prueba funcional
